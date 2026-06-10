@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
-import { env } from "./env.js";
-import { app } from "./server.js";
+import { env } from "./env";
+import { app } from "./server";
 
 async function init() {
   try {
