@@ -1,5 +1,8 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import { clerkMiddleware } from "@clerk/express";
+import { errorHandler, notFoundHandler } from "./middleware/error";
+import authRouter from "./routes/auth.route";
 
 export const app: Express = express();
 
@@ -11,7 +14,12 @@ app.use(
     credentials: true,
   }),
 );
+app.use(clerkMiddleware());
 
 app.get("/health", (_req, res) => {
   res.json({ health: true });
 });
+
+app.use("/auth", authRouter);
+app.use(notFoundHandler);
+app.use(errorHandler);

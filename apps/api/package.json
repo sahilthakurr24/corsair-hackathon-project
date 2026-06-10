@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clerk/express": "^2.1.23",
     "@corsair-dev/cli": "^0.1.19",
     "@corsair-dev/github": "^0.1.9",
     "@corsair-dev/gmail": "^0.1.4",
