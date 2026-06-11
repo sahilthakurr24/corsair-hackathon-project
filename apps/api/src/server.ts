@@ -3,6 +3,7 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { errorHandler, notFoundHandler } from "./middleware/error";
 import authRouter from "./routes/auth.route";
+import { env } from "./env";
 
 export const app: Express = express();
 
@@ -10,11 +11,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: env.WEB_ORIGIN,
     credentials: true,
   }),
 );
-app.use(clerkMiddleware());
+app.use(
+  clerkMiddleware({
+    secretKey: env.CLERK_SECRET_KEY,
+    publishableKey: env.CLERK_PUBLISHABLE_KEY,
+  }),
+);
 
 app.get("/health", (_req, res) => {
   res.json({ health: true });

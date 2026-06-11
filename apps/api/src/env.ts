@@ -1,14 +1,28 @@
-import "dotenv/config";
+import { config } from "dotenv";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
+
+const currentDir = dirname(fileURLToPath(import.meta.url));
+const apiRoot = resolve(currentDir, "..");
+const workspaceRoot = resolve(apiRoot, "../..");
+
+config({ path: resolve(workspaceRoot, ".env") });
+config({ path: resolve(workspaceRoot, "packages/.env") });
+config({ path: resolve(apiRoot, ".env") });
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   CORSAIR_KEK: z.string().describe("encryption key for corsair"),
   DATABASE_URL: z.string().describe("database url"),
   OPENAI_API_KEY: z.string().describe("open-ai keys"),
-  CORSAIR_TENANT_ID: z.string().default("sahil"),
-  CLERK_PUBLISHABLE_KEY: z.string().describe("publishable key for clerk"),
-  CLERK_SECRET_KEY: z.string().describe("secret key for clerk"),
+  CORSAIR_TENANT_ID: z.string().default("user_3EzDZVik1Xgbtzr8FkGmqyVuxxo"),
+  GOOGLE_CLIENT_ID: z.string().describe("google client id"),
+  CLERK_PUBLISHABLE_KEY: z.string().optional(),
+  CLERK_SECRET_KEY: z.string().describe("clerk secret key"),
+  GOOGLE_CLIENT_SECRET: z.string().describe("google client secret"),
+  WEB_ORIGIN: z.string().url().default("http://localhost:3000"),
+  API_PUBLIC_ORIGIN: z.string().url().default("http://localhost:4000"),
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {

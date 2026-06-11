@@ -15,6 +15,23 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
 
   console.error(error);
 
+  if (typeof error === "object" && error !== null) {
+    const status = "status" in error ? Number(error.status) : null;
+    const message =
+      "message" in error && typeof error.message === "string"
+        ? error.message
+        : null;
+    const clerkErrors =
+      "errors" in error && Array.isArray(error.errors) ? error.errors : null;
+
+    if (status && status >= 400 && status < 500) {
+      return res.status(status).json({
+        error: message ?? "Request failed",
+        errors: clerkErrors,
+      });
+    }
+  }
+
   return res.status(500).json({
     error: "Internal server error",
   });

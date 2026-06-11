@@ -1,24 +1,29 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f6f7f9;
+  --foreground: #14171f;
+  --muted: #667085;
+  --border: #d7dce5;
+  --panel: #ffffff;
+  --panel-soft: #eef3f7;
+  --primary: #146c62;
+  --primary-hover: #0f5a52;
+  --primary-soft: #dff3ef;
+  --danger: #b42318;
+  --danger-hover: #912018;
+  --danger-soft: #fff0f0;
 }
 
 html,
 body {
   max-width: 100vw;
+  min-height: 100vh;
   overflow-x: hidden;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 * {
@@ -27,24 +32,224 @@ body {
   margin: 0;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+button {
+  font: inherit;
 }
 
-.imgDark {
-  display: none;
+code {
+  overflow-wrap: anywhere;
+  font-family: "Courier New", Courier, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+.connections-page {
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.connections-shell {
+  width: min(960px, 100%);
+  margin: 0 auto;
+}
+
+.connections-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.connections-header p,
+.auth-panel p {
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.auth-panel {
+  width: min(560px, 100%);
+  margin: 12vh auto 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.auth-actions,
+.header-actions,
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-actions {
+  margin-top: 22px;
+}
+
+.header-actions {
+  align-items: center;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin-top: 6px;
+  font-size: 34px;
+  line-height: 1.15;
+}
+
+.account-row span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.notice {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.plugin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.plugin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.plugin-card-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.plugin-card h2 {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.plugin-card p {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.status-pill {
+  min-width: 112px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: #a63d3d;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.status-pill.connected {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.account-row {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.secondary-button {
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--foreground);
+}
+
+.danger-button {
+  padding: 0 14px;
+  background: var(--danger);
+  color: white;
+}
+
+.danger-button:hover:not(:disabled) {
+  background: var(--danger-hover);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 720px) {
+  .connections-page {
+    padding: 28px 14px;
   }
 
-  .imgLight {
-    display: none;
+  .connections-header,
+  .plugin-card-header {
+    grid-template-columns: 1fr;
   }
-  .imgDark {
-    display: unset;
+
+  .connections-header,
+  .header-actions,
+  .card-actions,
+  .auth-actions {
+    display: grid;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  .plugin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .secondary-button,
+  .danger-button {
+    width: 100%;
   }
 }
