@@ -1,26 +1,16 @@
 import "dotenv/config";
 import { OpenAIAgentsProvider } from "@corsair-dev/mcp";
 import { Agent, run, tool } from "@openai/agents";
-import { db, eq, users } from "@repo/database";
 import { z } from "zod";
-import { env } from "./env";
 import { corsairForTenant } from "./server/corsair";
-
-
-const DEFAULT_PROMPT =
-  "My dad's birthday is on 12 Aug. Please create a yearly all-day event on my calendar.";
+import { userService } from "./services";
 
 type TenantCorsair = ReturnType<typeof corsairForTenant>;
 
-async function getCurrentUserName(tenantId: string) {
-  const [user] = await db
-    .select({ name: users.name })
-    .from(users)
-    .where(eq(users.id, tenantId))
-    .limit(1);
-
-  return user?.name?.trim() || null;
-}
+type RunAiAgentInput = {
+  tenantId: string;
+  message: string;
+};
 
 function base64UrlEncode(value: string) {
   return Buffer.from(value, "utf8")
@@ -79,7 +69,9 @@ function createSendProfessionalGmailTool(
       body: z
         .string()
         .min(1)
-        .describe("Final plain-text email body, including greeting and closing."),
+        .describe(
+          "Final plain-text email body, including greeting and closing.",
+        ),
     }),
     execute: async ({ to, subject, body }) => {
       const sanitizedBody = sanitizeEmailBody(body, senderName);
@@ -165,26 +157,25 @@ const buildInstructions = (today: string, senderName: string | null) =>
     "- Be brief, direct, and professional.",
   ].join("\n");
 
-async function main() {
+export async function runAiAgent({ tenantId, message }: RunAiAgentInput) {
   const provider = new OpenAIAgentsProvider();
-  const tenantCorsair = corsairForTenant(env.CORSAIR_TENANT_ID);
-  const senderName = await getCurrentUserName(env.CORSAIR_TENANT_ID);
+  const tenantCorsair = corsairForTenant(tenantId);
+  const senderName = await userService.getCurrentUserName(tenantId);
   const tools = [
     createSendProfessionalGmailTool(tenantCorsair, senderName),
     ...provider.build({ corsair: tenantCorsair, tool }),
   ];
   const today = new Date().toISOString().slice(0, 10);
-  const prompt = process.argv.slice(2).join(" ").trim() || DEFAULT_PROMPT;
 
   const agent = new Agent({
     name: "corsair-agent",
+
     model: "gpt-4o-mini",
     instructions: buildInstructions(today, senderName),
     tools,
   });
 
-  const result = await run(agent, prompt, { maxTurns: 20 });
-  console.log(result.finalOutput);
-}
+  const result = await run(agent, message, { maxTurns: 20 });
 
-main().catch(console.error);
+  return result.finalOutput ?? "";
+}

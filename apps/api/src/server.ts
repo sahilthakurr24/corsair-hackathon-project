@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { errorHandler, notFoundHandler } from "./middleware/error";
+import aiRouter from "./routes/ai.route";
 import authRouter from "./routes/auth.route";
 import { env } from "./env";
 
@@ -27,5 +28,6 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/auth", authRouter);
+app.use("/ai", aiRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

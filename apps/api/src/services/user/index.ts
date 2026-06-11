@@ -1,5 +1,5 @@
 import { clerkClient } from "@clerk/express";
-import { db, users } from "@repo/database";
+import { db, users , eq} from "@repo/database";
 import {
   ClerkUserForDbSchema,
   type ClerkUserForDbSchemaInput,
@@ -87,6 +87,16 @@ class UserService {
     });
 
     return this.persistClerkUser(user);
+  }
+
+  async getCurrentUserName(tenantId: string) {
+    const [user] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, tenantId))
+      .limit(1);
+  
+    return user?.name?.trim() || null;
   }
 }
 export const userService = new UserService();
