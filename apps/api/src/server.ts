@@ -4,6 +4,8 @@ import { clerkMiddleware } from "@clerk/express";
 import { errorHandler, notFoundHandler } from "./middleware/error";
 import aiRouter from "./routes/ai.route";
 import authRouter from "./routes/auth.route";
+import webhookRouter from "./routes/webhook.route";
+import sseRouter from "./routes/sse.route";
 import { env } from "./env";
 
 export const app: Express = express();
@@ -16,6 +18,7 @@ app.use(
     credentials: true,
   }),
 );
+app.use("/webhooks", webhookRouter);
 app.use(
   clerkMiddleware({
     secretKey: env.CLERK_SECRET_KEY,
@@ -26,8 +29,8 @@ app.use(
 app.get("/health", (_req, res) => {
   res.json({ health: true });
 });
-
 app.use("/auth", authRouter);
 app.use("/ai", aiRouter);
+app.use("/ssc", sseRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

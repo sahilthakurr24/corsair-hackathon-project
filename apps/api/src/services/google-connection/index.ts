@@ -43,11 +43,13 @@ class GoogleConnectionService {
     const input = await CompleteGoogleOAuthSchema.parseAsync(payload);
     await setupCorsairIntegrations();
 
-    return processOAuthCallback(corsair, {
+    const result = await processOAuthCallback(corsair, {
       code: input.code,
       state: input.state,
       redirectUri: input.redirectUri,
     });
+
+    return result;
   }
 
   public async getStatus(tenantId: string): Promise<GoogleConnectionStatus> {
