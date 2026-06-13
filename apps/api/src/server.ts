@@ -31,6 +31,6 @@ app.get("/health", (_req, res) => {
 });
 app.use("/auth", authRouter);
 app.use("/ai", aiRouter);
-app.use("/ssc", sseRouter);
+app.use("/sse", sseRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

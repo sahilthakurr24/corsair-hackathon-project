@@ -3,6 +3,6 @@ import { handleCorsairWebhook } from "../controller/corsair-webhook";
 
 const router: Router = Router();
 
-router.post("/corsair", handleCorsairWebhook);
+router.post("/", handleCorsairWebhook);
 
 export default router;

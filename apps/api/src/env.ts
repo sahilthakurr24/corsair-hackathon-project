@@ -23,6 +23,9 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().describe("google client secret"),
   WEB_ORIGIN: z.string().url().default("http://localhost:3000"),
   API_PUBLIC_ORIGIN: z.string().url().default("http://localhost:4000"),
+  WEBHOOK_URL: z
+    .string()
+    .default("https://yapping-anyway-modular.ngrok-free.dev/"),
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {

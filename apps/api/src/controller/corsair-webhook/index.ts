@@ -5,7 +5,7 @@ import { corsair } from "../../server/corsair";
 import { sendToUser } from "../../lib/sse";
 
 function getTenantId(req: Request) {
-  const url = new URL(req.originalUrl, env.API_PUBLIC_ORIGIN);
+  const url = new URL(req.originalUrl, env.WEBHOOK_URL);
   return url.searchParams.get("tenantId") ?? env.CORSAIR_TENANT_ID;
 }
 
@@ -26,17 +26,21 @@ export async function handleCorsairWebhook(
       }
     }
 
-    
     if (!result.plugin) {
       return res.status(202).json({ handled: false });
     }
 
     console.log(`[corsair:webhook] ${result.plugin}.${result.action}`);
-    console.log('webhook-result:', result);
+    console.log("webhook-result:", result);
 
     //send the events to frontend  ---todo----->
-    
-    // sendToUser()
+
+    if (result.plugin && result.action) {
+      sendToUser(tenantId, {
+        plugin: `${result.plugin}.${result.action}`,
+        body: result?.body,
+      });
+    }
 
     return res.status(result.response?.success === false ? 500 : 200).json({
       handled: true,
