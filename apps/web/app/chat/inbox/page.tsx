@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../../lib/axios";
 import { ChatHeader } from "../_components/chat-header";
+import { useInboxCache } from "./_components/inbox-cache";
 import { MailListItem } from "./_components/mail-list-item";
 import { type GmailMessage, getErrorMessage } from "./_lib/gmail";
 
@@ -14,12 +15,15 @@ type GmailListResponse = {
 
 export default function InboxView() {
   const { isSignedIn } = useAuth();
-  const [messages, setMessages] = useState<GmailMessage[]>([]);
-  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const cache = useInboxCache();
+  const [messages, setMessages] = useState<GmailMessage[]>(() => cache.getListCache().messages);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(
+    () => cache.getListCache().nextPageToken,
+  );
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(() => cache.getListCache().loaded);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -39,8 +43,14 @@ export default function InboxView() {
         });
 
         const page = response.data.messages ?? [];
-        setMessages((current) => (append ? [...current, ...page] : page));
-        setNextPageToken(response.data.nextPageToken ?? null);
+        const newToken = response.data.nextPageToken ?? null;
+
+        setMessages((current) => {
+          const next = append ? [...current, ...page] : page;
+          cache.setListCache({ messages: next, nextPageToken: newToken, loaded: true });
+          return next;
+        });
+        setNextPageToken(newToken);
       } catch (requestError) {
         setError(getErrorMessage(requestError));
       } finally {
@@ -49,10 +59,11 @@ export default function InboxView() {
         setLoaded(true);
       }
     },
-    [isSignedIn, loading, loadingMore, nextPageToken],
+    [isSignedIn, loading, loadingMore, nextPageToken, cache],
   );
 
   useEffect(() => {
+    if (cache.getListCache().loaded) return;
     void fetchInbox({ append: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

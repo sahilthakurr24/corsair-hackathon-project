@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../../../lib/axios";
 import { ChatHeader } from "../../_components/chat-header";
 import { Icon } from "../../_components/icon";
+import { useInboxCache } from "../_components/inbox-cache";
 import { MailBody } from "../_components/mail-body";
 import {
   type GmailMessage,
@@ -21,12 +22,23 @@ type MessageDetailResponse = { message: GmailMessage };
 export default function MessageDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isSignedIn } = useAuth();
-  const [message, setMessage] = useState<GmailMessage | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cache = useInboxCache();
+  const [message, setMessage] = useState<GmailMessage | null>(() =>
+    id ? cache.getMessageDetail(id) ?? null : null,
+  );
+  const [loading, setLoading] = useState(() => !(id && cache.getMessageDetail(id)));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSignedIn || !id) return;
+
+    const cached = cache.getMessageDetail(id);
+    if (cached) {
+      setMessage(cached);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
     let cancelled = false;
     setLoading(true);
@@ -35,7 +47,9 @@ export default function MessageDetailPage() {
     api
       .get<MessageDetailResponse>(`/gmail/get-message/${id}`)
       .then((response) => {
-        if (!cancelled) setMessage(response.data.message);
+        if (cancelled) return;
+        setMessage(response.data.message);
+        cache.setMessageDetail(id, response.data.message);
       })
       .catch((requestError) => {
         if (!cancelled) setError(getErrorMessage(requestError));
@@ -47,7 +61,7 @@ export default function MessageDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, isSignedIn]);
+  }, [id, isSignedIn, cache]);
 
   const from = message ? getHeader(message, "From") : "";
   const subject = message ? getHeader(message, "Subject") || "(no subject)" : "";
