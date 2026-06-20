@@ -8,7 +8,8 @@ import {
   useUser,
 } from "@clerk/nextjs";
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { api } from "../../lib/axios";
 
 type GooglePlugin = "gmail" | "googlecalendar";
 
@@ -55,10 +56,6 @@ const secondaryButtonClass =
 const dangerButtonClass =
   "inline-flex min-h-[42px] w-full items-center justify-center rounded-lg border-0 px-3.5 font-bold cursor-pointer bg-danger text-white hover:enabled:bg-danger-hover disabled:cursor-not-allowed disabled:opacity-65 sm:w-auto";
 
-function getApiOrigin() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-}
-
 function getApiErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiErrorResponse | undefined;
@@ -72,8 +69,7 @@ function getApiErrorMessage(error: unknown) {
 }
 
 function ConnectionsContent() {
-  const apiOrigin = useMemo(getApiOrigin, []);
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const [status, setStatus] = useState(defaultStatus);
   const [loadingStatus, setLoadingStatus] = useState(true);
@@ -81,28 +77,16 @@ function ConnectionsContent() {
   const [message, setMessage] = useState<string | null>(null);
   const [accountSynced, setAccountSynced] = useState(false);
 
-  const authHeaders = useCallback(async () => {
-    const token = await getToken();
-
-    if (!token) {
-      throw new Error("Sign in again to continue.");
-    }
-
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }, [getToken]);
-
   const syncAccount = useCallback(async () => {
     if (!isSignedIn) return;
 
     try {
-      await axios.get(`${apiOrigin}/auth/me`, { headers: await authHeaders() });
+      await api.get("/auth/me");
       setAccountSynced(true);
     } catch (error) {
       throw new Error(`Could not sync your account: ${getApiErrorMessage(error)}`);
     }
-  }, [apiOrigin, authHeaders, isSignedIn]);
+  }, [isSignedIn]);
 
   const refreshStatus = useCallback(async () => {
     if (!isSignedIn) return;
@@ -112,10 +96,8 @@ function ConnectionsContent() {
     try {
       await syncAccount();
 
-      const response = await axios
-        .get<StatusResponse>(`${apiOrigin}/auth/google/status`, {
-          headers: await authHeaders(),
-        })
+      const response = await api
+        .get<StatusResponse>("/auth/google/status")
         .catch(() => {
           throw new Error("Could not load connection status");
         });
@@ -126,7 +108,7 @@ function ConnectionsContent() {
     } finally {
       setLoadingStatus(false);
     }
-  }, [apiOrigin, authHeaders, isSignedIn, syncAccount]);
+  }, [isSignedIn, syncAccount]);
 
   async function connect(plugin: GooglePlugin) {
     setBusyPlugin(plugin);
@@ -135,16 +117,7 @@ function ConnectionsContent() {
     try {
       await syncAccount();
 
-      const response = await axios.post<{ url: string }>(
-        `${apiOrigin}/auth/google/oauth/start`,
-        { plugin },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...(await authHeaders()),
-          },
-        },
-      );
+      const response = await api.post<{ url: string }>("/auth/google/oauth/start", { plugin });
 
       window.location.assign(response.data.url);
     } catch (error) {
@@ -158,10 +131,7 @@ function ConnectionsContent() {
     setMessage(null);
 
     try {
-      const response = await axios.delete<StatusResponse>(
-        `${apiOrigin}/auth/google/connections/${plugin}`,
-        { headers: await authHeaders() },
-      );
+      const response = await api.delete<StatusResponse>(`/auth/google/connections/${plugin}`);
 
       setStatus(response.data.status);
       const pluginName = plugins.find((item) => item.id === plugin)?.name;

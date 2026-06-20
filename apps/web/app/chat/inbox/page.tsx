@@ -3,6 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { api } from "../../../lib/axios";
 import { ChatHeader } from "../_components/chat-header";
 
 type GmailHeader = { name?: string; value?: string };
@@ -28,12 +29,11 @@ function formatMessageDate(internalDate?: string) {
 }
 
 export default function InboxView() {
-  const { getToken, isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
   const [messages, setMessages] = useState<GmailMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
   async function fetchInbox() {
     if (!isSignedIn || loading) return;
@@ -42,20 +42,17 @@ export default function InboxView() {
     setError(null);
 
     try {
-      const token = await getToken();
-      if (!token) throw new Error("Your session expired. Please sign in again.");
-
-      const response = await axios.get<GmailMessage[]>(`${apiOrigin}/gmail/get-messages`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await api.get<GmailMessage[]>("/gmail/get-messages");
       setMessages(response.data ?? []);
     } catch (requestError) {
       if (axios.isAxiosError(requestError) && requestError.response?.status === 404) {
         setMessages([]);
       } else {
         const message = axios.isAxiosError(requestError)
-          ? ((requestError.response?.data as { message?: string } | undefined)?.message ??
+          ? ((requestError.response?.data as { message?: string; reason?: string } | undefined)
+              ?.message ??
+              (requestError.response?.data as { message?: string; reason?: string } | undefined)
+                ?.reason ??
               requestError.message)
           : requestError instanceof Error
             ? requestError.message

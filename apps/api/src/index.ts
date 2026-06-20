@@ -8,6 +8,10 @@ async function init() {
     await setupCorsairIntegrations();
 
     const server = createServer(app);
+    server.on("error", (error) => {
+      console.error("Server failed to start", error);
+      process.exit(1);
+    });
     server.listen(env.PORT, () => {
       console.log(`Server is running at http://localhost:${env.PORT}`);
     });

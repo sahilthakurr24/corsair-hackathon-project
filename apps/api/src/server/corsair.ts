@@ -23,6 +23,10 @@ type OAuthClientCredentials = {
 
 export const pool = new Pool({ connectionString: env.DATABASE_URL });
 
+pool.on("error", (error) => {
+  console.error("[pg pool] idle client error", error);
+});
+
 export const corsair = createCorsair({
   plugins: [
     github(),

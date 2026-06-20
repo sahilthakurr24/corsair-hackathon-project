@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
+import axios from "axios";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { api } from "../../lib/axios";
 import { Icon } from "./_components/icon";
 import { ChatHeader } from "./_components/chat-header";
 import { useChatShell } from "./_components/chat-shell";
@@ -43,7 +45,7 @@ function buildContext(messages: ChatMessage[], current: string) {
 }
 
 export default function ChatView() {
-  const { getToken, isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { newChatSignal } = useChatShell();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -52,7 +54,6 @@ export default function ChatView() {
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
   const initials =
     user?.firstName?.at(0)?.toUpperCase() ??
@@ -94,32 +95,11 @@ export default function ChatView() {
     setMessages((current) => [...current, userMessage]);
 
     try {
-      const token = await getToken();
-      if (!token)
-        throw new Error("Your session expired. Please sign in again.");
-
-      const response = await fetch(`${apiOrigin}/ai/chat`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: buildContext(messages, content) }),
-      });
-
-      const data = (await response.json().catch(() => null)) as {
+      const response = await api.post<{
         output?: string;
         error?: string;
         reason?: string;
-      } | null;
-
-      if (!response.ok) {
-        throw new Error(
-          data?.error ??
-            data?.reason ??
-            "CalMail could not complete that request.",
-        );
-      }
+      }>("/ai/chat", { message: buildContext(messages, content) });
 
       setMessages((current) => [
         ...current,
@@ -127,16 +107,22 @@ export default function ChatView() {
           id: crypto.randomUUID(),
           role: "assistant",
           content:
-            data?.output?.trim() || "The request completed without a response.",
+            response.data?.output?.trim() ||
+            "The request completed without a response.",
           timestamp: formatTime(),
         },
       ]);
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
+      const message = axios.isAxiosError(requestError)
+        ? ((requestError.response?.data as { error?: string; reason?: string } | undefined)
+            ?.error ??
+            (requestError.response?.data as { error?: string; reason?: string } | undefined)
+              ?.reason ??
+            "CalMail could not complete that request.")
+        : requestError instanceof Error
           ? requestError.message
-          : "Something went wrong.",
-      );
+          : "Something went wrong.";
+      setError(message);
     } finally {
       setSending(false);
       requestAnimationFrame(() => textareaRef.current?.focus());
