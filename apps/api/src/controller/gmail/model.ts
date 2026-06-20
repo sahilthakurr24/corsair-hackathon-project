@@ -13,3 +13,7 @@ export const ListMessagesQuerySchema = z.object({
     .optional()
     .default(DEFAULT_PAGE_SIZE),
 });
+
+export const MessageIdParamSchema = z.object({
+  id: z.string().trim().min(1),
+});

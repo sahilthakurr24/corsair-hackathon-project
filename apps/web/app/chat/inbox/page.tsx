@@ -1,46 +1,16 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../../lib/axios";
 import { ChatHeader } from "../_components/chat-header";
-
-type GmailHeader = { name?: string; value?: string };
-type GmailMessage = {
-  id?: string;
-  threadId?: string;
-  snippet?: string;
-  internalDate?: string;
-  payload?: { headers?: GmailHeader[] };
-};
+import { MailListItem } from "./_components/mail-list-item";
+import { type GmailMessage, getErrorMessage } from "./_lib/gmail";
 
 type GmailListResponse = {
   messages: GmailMessage[];
   nextPageToken: string | null;
 };
-
-function getHeader(message: GmailMessage, name: string) {
-  return (
-    message.payload?.headers?.find((header) => header.name?.toLowerCase() === name.toLowerCase())
-      ?.value ?? ""
-  );
-}
-
-function formatMessageDate(internalDate?: string) {
-  const date = new Date(Number(internalDate));
-  if (!internalDate || Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
-}
-
-function getErrorMessage(requestError: unknown) {
-  if (axios.isAxiosError(requestError)) {
-    const data = requestError.response?.data as { message?: string; reason?: string } | undefined;
-    return data?.message ?? data?.reason ?? requestError.message;
-  }
-
-  return requestError instanceof Error ? requestError.message : "Something went wrong.";
-}
 
 export default function InboxView() {
   const { isSignedIn } = useAuth();
@@ -154,27 +124,9 @@ export default function InboxView() {
             <p className="my-10 text-center text-[11px] text-[#98a2b3]">No messages found.</p>
           )}
 
-          {messages.map((message) => {
-            const from = getHeader(message, "From") || "Unknown sender";
-            const subject = getHeader(message, "Subject") || "(no subject)";
-            return (
-              <article
-                key={message.id ?? message.threadId}
-                className="mb-[10px] rounded-[9px] border border-[#e7ecf2] bg-white px-[15px] py-[13px] hover:border-[#b7d6fb]"
-              >
-                <div className="mb-1 flex items-baseline justify-between gap-[10px]">
-                  <b className="overflow-hidden text-[11px] text-ellipsis whitespace-nowrap">{from}</b>
-                  <small className="flex-none text-[9px] text-[#98a2b3]">
-                    {formatMessageDate(message.internalDate)}
-                  </small>
-                </div>
-                <strong className="mb-1 block text-[11px]">{subject}</strong>
-                <p className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-[#7f8b9e]">
-                  {message.snippet}
-                </p>
-              </article>
-            );
-          })}
+          {messages.map((message) => (
+            <MailListItem key={message.id ?? message.threadId} message={message} />
+          ))}
 
           {nextPageToken && <div ref={sentinelRef} className="h-1" />}
           {loadingMore && (

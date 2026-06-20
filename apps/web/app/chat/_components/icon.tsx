@@ -49,6 +49,12 @@ const paths: Record<string, React.ReactNode> = {
   ),
   check: <path d="m5 12 4 4L19 6" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  back: (
+    <>
+      <path d="M19 12H5" />
+      <path d="m10 17-5-5 5-5" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
