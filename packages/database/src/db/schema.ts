@@ -6,6 +6,8 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  boolean,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const connectedAccountProviderEnum = pgEnum(
@@ -129,4 +131,48 @@ export const corsairEvents = pgTable("corsair_events", {
   eventType: text("event_type").notNull(),
   payload: jsonb("payload").notNull().default({}),
   status: text("status"),
+});
+
+export const emailThreads = pgTable("email_threads", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  userId: text("user_id").notNull(),
+
+  gmailThreadId: text("gmail_thread_id").notNull().unique(),
+
+  subject: text("subject"),
+
+  snippet: text("snippet"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const emailMessages = pgTable("email_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  threadId: uuid("thread_id")
+    .references(() => emailThreads.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+
+  gmailMessageId: text("gmail_message_id").notNull().unique(),
+
+  from: text("from"),
+
+  to: text("to"),
+
+  subject: text("subject"),
+
+  snippet: text("snippet"),
+
+  body: text("body"),
+
+  isRead: boolean("is_read").default(false).notNull(),
+
+  receivedAt: timestamp("received_at").notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

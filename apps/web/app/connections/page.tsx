@@ -7,6 +7,7 @@ import {
   useAuth,
   useUser,
 } from "@clerk/nextjs";
+import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type GooglePlugin = "gmail" | "googlecalendar";
@@ -47,18 +48,27 @@ const defaultStatus: StatusResponse["status"] = {
   googlecalendar: { connected: false, accountId: null },
 };
 
+const primaryButtonClass =
+  "inline-flex min-h-[42px] items-center justify-center rounded-lg border-0 font-bold cursor-pointer flex-1 bg-primary text-white hover:enabled:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-65";
+const secondaryButtonClass =
+  "inline-flex min-h-[42px] w-full items-center justify-center rounded-lg border border-border bg-panel px-4 font-bold cursor-pointer text-foreground disabled:cursor-not-allowed disabled:opacity-65 sm:w-auto";
+const dangerButtonClass =
+  "inline-flex min-h-[42px] w-full items-center justify-center rounded-lg border-0 px-3.5 font-bold cursor-pointer bg-danger text-white hover:enabled:bg-danger-hover disabled:cursor-not-allowed disabled:opacity-65 sm:w-auto";
+
 function getApiOrigin() {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 }
 
-async function getApiErrorMessage(response: Response) {
-  const data = (await response.json().catch(() => null)) as
-    | ApiErrorResponse
-    | null;
-  const clerkMessage =
-    data?.errors?.at(0)?.longMessage ?? data?.errors?.at(0)?.message;
+function getApiErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as ApiErrorResponse | undefined;
+    const clerkMessage =
+      data?.errors?.at(0)?.longMessage ?? data?.errors?.at(0)?.message;
 
-  return clerkMessage ?? data?.error ?? `${response.status} ${response.statusText}`;
+    return clerkMessage ?? data?.error ?? error.message;
+  }
+
+  return error instanceof Error ? error.message : "Something went wrong.";
 }
 
 function ConnectionsContent() {
@@ -86,15 +96,12 @@ function ConnectionsContent() {
   const syncAccount = useCallback(async () => {
     if (!isSignedIn) return;
 
-    const response = await fetch(`${apiOrigin}/auth/me`, {
-      headers: await authHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Could not sync your account: ${await getApiErrorMessage(response)}`);
+    try {
+      await axios.get(`${apiOrigin}/auth/me`, { headers: await authHeaders() });
+      setAccountSynced(true);
+    } catch (error) {
+      throw new Error(`Could not sync your account: ${getApiErrorMessage(error)}`);
     }
-
-    setAccountSynced(true);
   }, [apiOrigin, authHeaders, isSignedIn]);
 
   const refreshStatus = useCallback(async () => {
@@ -105,14 +112,15 @@ function ConnectionsContent() {
     try {
       await syncAccount();
 
-      const response = await fetch(`${apiOrigin}/auth/google/status`, {
-        headers: await authHeaders(),
-      });
+      const response = await axios
+        .get<StatusResponse>(`${apiOrigin}/auth/google/status`, {
+          headers: await authHeaders(),
+        })
+        .catch(() => {
+          throw new Error("Could not load connection status");
+        });
 
-      if (!response.ok) throw new Error("Could not load connection status");
-
-      const data = (await response.json()) as StatusResponse;
-      setStatus(data.status);
+      setStatus(response.data.status);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Status failed");
     } finally {
@@ -127,23 +135,20 @@ function ConnectionsContent() {
     try {
       await syncAccount();
 
-      const response = await fetch(`${apiOrigin}/auth/google/oauth/start`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(await authHeaders()),
+      const response = await axios.post<{ url: string }>(
+        `${apiOrigin}/auth/google/oauth/start`,
+        { plugin },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(await authHeaders()),
+          },
         },
-        body: JSON.stringify({ plugin }),
-      });
+      );
 
-      if (!response.ok) {
-        throw new Error(await getApiErrorMessage(response));
-      }
-
-      const data = (await response.json()) as { url: string };
-      window.location.assign(data.url);
+      window.location.assign(response.data.url);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "OAuth failed");
+      setMessage(getApiErrorMessage(error));
       setBusyPlugin(null);
     }
   }
@@ -153,24 +158,16 @@ function ConnectionsContent() {
     setMessage(null);
 
     try {
-      const response = await fetch(
+      const response = await axios.delete<StatusResponse>(
         `${apiOrigin}/auth/google/connections/${plugin}`,
-        {
-          method: "DELETE",
-          headers: await authHeaders(),
-        },
+        { headers: await authHeaders() },
       );
 
-      if (!response.ok) {
-        throw new Error(await getApiErrorMessage(response));
-      }
-
-      const data = (await response.json()) as StatusResponse;
-      setStatus(data.status);
+      setStatus(response.data.status);
       const pluginName = plugins.find((item) => item.id === plugin)?.name;
       setMessage(`${pluginName} disconnected.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Disconnect failed");
+      setMessage(getApiErrorMessage(error));
     } finally {
       setBusyPlugin(null);
     }
@@ -197,27 +194,31 @@ function ConnectionsContent() {
   }, [isLoaded, isSignedIn, refreshStatus]);
 
   if (!isLoaded) {
-    return <div className="notice">Loading account...</div>;
+    return (
+      <div className="mb-4 rounded-lg border border-border bg-panel-soft px-3.5 py-3">
+        Loading account...
+      </div>
+    );
   }
 
   return (
-    <section className="connections-shell">
+    <section className="mx-auto w-[min(960px,100%)]">
       {!isSignedIn ? (
-        <div className="auth-panel">
-          <p className="eyebrow">Corsair</p>
-          <h1>Connect your Google account</h1>
-          <p>
+        <div className="mx-auto mt-[12vh] w-[min(560px,100%)] rounded-lg border border-border bg-panel p-6">
+          <p className="text-[13px] font-bold uppercase text-primary">Corsair</p>
+          <h1 className="mt-1.5 text-[28px] leading-[1.15] sm:text-[34px]">Connect your Google account</h1>
+          <p className="mt-2 leading-[1.5] text-muted">
             Sign in to manage Gmail and Google Calendar access for your
             workspace.
           </p>
-          <div className="auth-actions">
+          <div className="mt-[22px] grid gap-2.5 sm:flex">
             <SignInButton mode="modal">
-              <button className="primary-button" type="button">
+              <button className={primaryButtonClass} type="button">
                 Sign in
               </button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <button className="secondary-button" type="button">
+              <button className={secondaryButtonClass} type="button">
                 Create account
               </button>
             </SignUpButton>
@@ -227,21 +228,23 @@ function ConnectionsContent() {
 
       {isSignedIn ? (
         <>
-          <div className="connections-header">
+          <div className="mb-5 grid gap-4 sm:flex sm:items-start sm:justify-between">
             <div>
-              <p className="eyebrow">Connections</p>
-              <h1>Google account access</h1>
-              <p>
+              <p className="text-[13px] font-bold uppercase text-primary">Connections</p>
+              <h1 className="mt-1.5 text-[28px] leading-[1.15] sm:text-[34px]">Google account access</h1>
+              <p className="mt-2 leading-[1.5] text-muted">
                 Signed in as{" "}
                 <strong>
                   {user?.primaryEmailAddress?.emailAddress ?? user?.fullName}
                 </strong>
               </p>
-              <p>{accountSynced ? "Account synced" : "Syncing account"}</p>
+              <p className="mt-2 leading-[1.5] text-muted">
+                {accountSynced ? "Account synced" : "Syncing account"}
+              </p>
             </div>
-            <div className="header-actions">
+            <div className="grid items-center gap-2.5 sm:flex">
               <button
-                className="secondary-button"
+                className={secondaryButtonClass}
                 type="button"
                 onClick={refreshStatus}
                 disabled={loadingStatus}
@@ -252,33 +255,40 @@ function ConnectionsContent() {
             </div>
           </div>
 
-          {message ? <div className="notice">{message}</div> : null}
+          {message ? (
+            <div className="mb-4 rounded-lg border border-border bg-panel-soft px-3.5 py-3">
+              {message}
+            </div>
+          ) : null}
 
-          <div className="plugin-grid">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {plugins.map((plugin) => {
               const pluginStatus = status[plugin.id];
               const isBusy = busyPlugin === plugin.id;
 
               return (
-                <article className="plugin-card" key={plugin.id}>
-                  <div className="plugin-card-header">
+                <article
+                  className="flex min-w-0 flex-col gap-[18px] rounded-lg border border-border bg-panel p-[18px]"
+                  key={plugin.id}
+                >
+                  <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[1fr_auto]">
                     <div>
-                      <h2>{plugin.name}</h2>
-                      <p>{plugin.description}</p>
+                      <h2 className="text-xl leading-tight">{plugin.name}</h2>
+                      <p className="mt-1.5 leading-[1.45] text-muted">{plugin.description}</p>
                     </div>
                     <span
-                      className={
+                      className={`min-w-[112px] rounded-full px-2.5 py-1.5 text-center text-[13px] font-bold ${
                         pluginStatus.connected
-                          ? "status-pill connected"
-                          : "status-pill"
-                      }
+                          ? "bg-primary-soft text-primary"
+                          : "bg-danger-soft text-[#a63d3d]"
+                      }`}
                     >
                       {pluginStatus.connected ? "Connected" : "Not connected"}
                     </span>
                   </div>
 
-                  <div className="account-row">
-                    <span>Connection</span>
+                  <div className="grid min-w-0 gap-1.5 rounded-lg bg-panel-soft p-3">
+                    <span className="text-[13px] text-muted">Connection</span>
                     <strong>
                       {pluginStatus.connected
                         ? "Ready for this account"
@@ -286,9 +296,9 @@ function ConnectionsContent() {
                     </strong>
                   </div>
 
-                  <div className="card-actions">
+                  <div className="grid gap-2.5 sm:flex">
                     <button
-                      className="primary-button"
+                      className={primaryButtonClass}
                       type="button"
                       onClick={() => connect(plugin.id)}
                       disabled={Boolean(busyPlugin)}
@@ -301,7 +311,7 @@ function ConnectionsContent() {
                     </button>
                     {pluginStatus.connected ? (
                       <button
-                        className="danger-button"
+                        className={dangerButtonClass}
                         type="button"
                         onClick={() => disconnect(plugin.id)}
                         disabled={Boolean(busyPlugin)}
@@ -322,7 +332,7 @@ function ConnectionsContent() {
 
 export default function ConnectionsPage() {
   return (
-    <main className="connections-page">
+    <main className="min-h-screen px-3.5 py-7 sm:px-5 sm:py-10">
       <ConnectionsContent />
     </main>
   );

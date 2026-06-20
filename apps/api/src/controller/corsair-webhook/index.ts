@@ -33,7 +33,7 @@ export async function handleCorsairWebhook(
     console.log(`[corsair:webhook] ${result.plugin}.${result.action}`);
     console.log("webhook-result:", result);
 
-    //send the events to frontend  ---todo----->
+    //send the events to frontend
 
     if (result.plugin && result.action) {
       sendToUser(tenantId, {

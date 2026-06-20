@@ -6,6 +6,7 @@ import aiRouter from "./routes/ai.route";
 import authRouter from "./routes/auth.route";
 import webhookRouter from "./routes/webhook.route";
 import sseRouter from "./routes/sse.route";
+import gmailRouter from "./routes/gmail.route";
 import { env } from "./env";
 
 export const app: Express = express();
@@ -32,5 +33,6 @@ app.get("/health", (_req, res) => {
 app.use("/auth", authRouter);
 app.use("/ai", aiRouter);
 app.use("/sse", sseRouter);
+app.use("/gmail", gmailRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

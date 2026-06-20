@@ -1,0 +1,70 @@
+const paths: Record<string, React.ReactNode> = {
+  mail: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="3" />
+      <path d="m4 7 8 6 8-6" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="3" />
+      <path d="M8 3v4m8-4v4M3 10h18" />
+    </>
+  ),
+  spark: (
+    <>
+      <path d="m12 3 1.3 4.1L17 9l-3.7 1.9L12 15l-1.3-4.1L7 9l3.7-1.9L12 3Z" />
+      <path d="m19 15 .7 2.2 2.3 1.3-2.3 1.3L19 22l-.7-2.2-2.3-1.3 2.3-1.3L19 15Z" />
+    </>
+  ),
+  inbox: (
+    <>
+      <path d="M4 5h16l2 10v4H2v-4L4 5Z" />
+      <path d="M2 15h6l2 2h4l2-2h6" />
+    </>
+  ),
+  tasks: (
+    <>
+      <path d="m4 7 2 2 3-4M12 7h8M4 15l2 2 3-4M12 15h8" />
+    </>
+  ),
+  contacts: (
+    <>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 19a6 6 0 0 1 12 0M17 8h4m-2-2v4" />
+    </>
+  ),
+  plus: <path d="M12 5v14M5 12h14" />,
+  send: (
+    <>
+      <path d="m3 4 18 8-18 8 3-8-3-8Z" />
+      <path d="M6 12h15" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  check: <path d="m5 12 4 4L19 6" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+};
+
+export function Icon({ name, size = 18 }: { name: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {paths[name]}
+    </svg>
+  );
+}

@@ -15,8 +15,9 @@ const geistMono = localFont({
 const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export const metadata: Metadata = {
-  title: "Corsair Connections",
-  description: "Manage connected Google accounts.",
+  title: "CalMail — AI Email & Calendar Assistant",
+  description:
+    "Manage your inbox and calendar through natural conversation with CalMail.",
 };
 
 export default function RootLayout({
