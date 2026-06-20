@@ -55,6 +55,31 @@ const paths: Record<string, React.ReactNode> = {
       <path d="m10 17-5-5 5-5" />
     </>
   ),
+  pin: (
+    <>
+      <path d="M12 21s7-7.5 7-12a7 7 0 0 0-14 0c0 4.5 7 12 7 12Z" />
+      <circle cx="12" cy="9" r="2.5" />
+    </>
+  ),
+  video: (
+    <>
+      <rect x="3" y="6" width="13" height="12" rx="2" />
+      <path d="m16 10 5-3v10l-5-3" />
+    </>
+  ),
+  externalLink: (
+    <>
+      <path d="M14 5h5v5" />
+      <path d="M19 5 10 14" />
+      <path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" />
+    </>
+  ),
+  close: (
+    <>
+      <path d="M18 6 6 18" />
+      <path d="M6 6l12 12" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {

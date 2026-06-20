@@ -35,6 +35,6 @@ app.use("/auth", authRouter);
 app.use("/ai", aiRouter);
 app.use("/sse", sseRouter);
 app.use("/gmail", gmailRouter);
-app.use("/calandar", googleCalendarRouter);
+app.use("/calendar", googleCalendarRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

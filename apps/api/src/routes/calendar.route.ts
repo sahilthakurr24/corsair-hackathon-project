@@ -1,9 +1,8 @@
 import express, { Router } from "express";
-import { getCalendarEvents } from "../controller/calender";
+import { getCalendarEvents } from "../controller/calendar";
 
-const router :Router = express.Router();
+const router: Router = express.Router();
 
-
-router.get('/events', getCalendarEvents);
+router.get("/events", getCalendarEvents);
 
 export default router;
