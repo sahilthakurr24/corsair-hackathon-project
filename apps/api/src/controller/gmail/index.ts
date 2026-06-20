@@ -1,38 +1,50 @@
-import type { Request, Response } from "express";
-import { getAuth } from "@clerk/express";
+import type { NextFunction, Request, Response } from "express";
 import { corsair } from "../../server/corsair";
-export async function getMessages(req: Request, res: Response) {
-  try {
-    const { userId } = getAuth(req);
-    if (!userId) {
-      return res.status(401).json({
-        error: "Unauthorized",
-        reason: "No valid Clerk session token found",
-      });
-    }
+import { getAuthenticatedUserId } from "../auth";
+import { ListMessagesQuerySchema } from "./model";
 
-    const { messages } = await corsair
-      .withTenant(userId)
-      .gmail.api.messages.list({});
+const LIST_HEADERS = ["From", "Subject", "Date"];
+
+export async function getMessages(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const userId = getAuthenticatedUserId(req, res);
+    if (!userId) return;
+
+    const { pageToken, pageSize } = await ListMessagesQuerySchema.parseAsync(
+      req.query,
+    );
+    const tenant = corsair.withTenant(userId);
+
+    const { messages, nextPageToken } = await tenant.gmail.api.messages.list({
+      maxResults: pageSize,
+      pageToken,
+    });
 
     if (!messages?.length) {
-      return res.status(404).json({
-        message: "No messages found",
-      });
+      return res.status(200).json({ messages: [], nextPageToken: null });
     }
 
     const emails = await Promise.all(
       messages
         .filter((msg) => msg.id)
         .map((msg) =>
-          corsair.withTenant(userId).gmail.api.messages.get({
+          tenant.gmail.api.messages.get({
             id: msg.id!,
+            format: "metadata",
+            metadataHeaders: LIST_HEADERS,
           }),
         ),
     );
 
-    return res.status(200).json(emails);
+    return res.status(200).json({
+      messages: emails,
+      nextPageToken: nextPageToken ?? null,
+    });
   } catch (error) {
-    return res.status(500).json({ message: "Something went wrong!!" });
+    return next(error);
   }
 }

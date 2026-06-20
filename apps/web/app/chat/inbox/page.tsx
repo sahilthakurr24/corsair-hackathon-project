@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../../lib/axios";
 import { ChatHeader } from "../_components/chat-header";
 
@@ -13,6 +13,11 @@ type GmailMessage = {
   snippet?: string;
   internalDate?: string;
   payload?: { headers?: GmailHeader[] };
+};
+
+type GmailListResponse = {
+  messages: GmailMessage[];
+  nextPageToken: string | null;
 };
 
 function getHeader(message: GmailMessage, name: string) {
@@ -28,47 +33,76 @@ function formatMessageDate(internalDate?: string) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
 }
 
+function getErrorMessage(requestError: unknown) {
+  if (axios.isAxiosError(requestError)) {
+    const data = requestError.response?.data as { message?: string; reason?: string } | undefined;
+    return data?.message ?? data?.reason ?? requestError.message;
+  }
+
+  return requestError instanceof Error ? requestError.message : "Something went wrong.";
+}
+
 export default function InboxView() {
   const { isSignedIn } = useAuth();
   const [messages, setMessages] = useState<GmailMessage[]>([]);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  async function fetchInbox() {
-    if (!isSignedIn || loading) return;
+  const fetchInbox = useCallback(
+    async ({ append }: { append: boolean }) => {
+      if (!isSignedIn) return;
+      if (append ? loadingMore : loading) return;
+      if (append && !nextPageToken) return;
 
-    setLoading(true);
-    setError(null);
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      setError(null);
 
-    try {
-      const response = await api.get<GmailMessage[]>("/gmail/get-messages");
-      setMessages(response.data ?? []);
-    } catch (requestError) {
-      if (axios.isAxiosError(requestError) && requestError.response?.status === 404) {
-        setMessages([]);
-      } else {
-        const message = axios.isAxiosError(requestError)
-          ? ((requestError.response?.data as { message?: string; reason?: string } | undefined)
-              ?.message ??
-              (requestError.response?.data as { message?: string; reason?: string } | undefined)
-                ?.reason ??
-              requestError.message)
-          : requestError instanceof Error
-            ? requestError.message
-            : "Something went wrong.";
-        setError(message);
+      try {
+        const response = await api.get<GmailListResponse>("/gmail/get-messages", {
+          params: append && nextPageToken ? { pageToken: nextPageToken } : undefined,
+        });
+
+        const page = response.data.messages ?? [];
+        setMessages((current) => (append ? [...current, ...page] : page));
+        setNextPageToken(response.data.nextPageToken ?? null);
+      } catch (requestError) {
+        setError(getErrorMessage(requestError));
+      } finally {
+        if (append) setLoadingMore(false);
+        else setLoading(false);
+        setLoaded(true);
       }
-    } finally {
-      setLoading(false);
-      setLoaded(true);
-    }
-  }
+    },
+    [isSignedIn, loading, loadingMore, nextPageToken],
+  );
 
   useEffect(() => {
-    void fetchInbox();
+    void fetchInbox({ append: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !nextPageToken) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          void fetchInbox({ append: true });
+        }
+      },
+      { root: scrollContainerRef.current, rootMargin: "200px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [fetchInbox, nextPageToken]);
 
   return (
     <>
@@ -86,7 +120,7 @@ export default function InboxView() {
           </p>
           <button
             type="button"
-            onClick={() => void fetchInbox()}
+            onClick={() => void fetchInbox({ append: false })}
             disabled={loading}
             className="flex-none rounded-md border border-[#d8e1eb] bg-white px-3 py-[7px] text-[9px] font-semibold text-[#344054] disabled:cursor-not-allowed disabled:text-[#98a2b3]"
           >
@@ -94,7 +128,10 @@ export default function InboxView() {
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-[14px] pb-6 md:px-[54px]">
+        <div
+          ref={scrollContainerRef}
+          className="min-h-0 flex-1 overflow-y-auto px-5 py-[14px] pb-6 md:px-[54px]"
+        >
           {loading && messages.length === 0 && (
             <p className="my-10 text-center text-[11px] text-[#98a2b3]">Loading your inbox…</p>
           )}
@@ -138,6 +175,11 @@ export default function InboxView() {
               </article>
             );
           })}
+
+          {nextPageToken && <div ref={sentinelRef} className="h-1" />}
+          {loadingMore && (
+            <p className="py-3 text-center text-[10px] text-[#98a2b3]">Loading more…</p>
+          )}
         </div>
       </div>
     </>
