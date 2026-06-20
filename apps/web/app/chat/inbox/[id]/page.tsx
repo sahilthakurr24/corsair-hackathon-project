@@ -9,6 +9,7 @@ import { ChatHeader } from "../../_components/chat-header";
 import { Icon } from "../../_components/icon";
 import { useInboxCache } from "../_components/inbox-cache";
 import { MailBody } from "../_components/mail-body";
+import { SenderAvatar } from "../_components/sender-avatar";
 import {
   type GmailMessage,
   formatFullDate,
@@ -67,7 +68,6 @@ export default function MessageDetailPage() {
   const subject = message ? getHeader(message, "Subject") || "(no subject)" : "";
   const to = message ? getHeader(message, "To") : "";
   const sender = parseFromHeader(from || "Unknown sender");
-  const initials = sender.name.slice(0, 2).toUpperCase();
 
   return (
     <>
@@ -99,9 +99,7 @@ export default function MessageDetailPage() {
         {message && !loading && !error && (
           <article className="mx-auto max-w-[760px] overflow-hidden rounded-[12px] border border-[#e7ecf2] bg-white">
             <header className="flex items-start gap-3 border-b border-[#e7ecf2] p-5">
-              <span className="grid h-10 w-10 flex-none place-items-center rounded-full bg-gradient-to-br from-[#f4b283] to-[#74b6ac] text-[12px] font-bold text-white">
-                {initials}
-              </span>
+              <SenderAvatar email={sender.email} name={sender.name} size={40} />
               <div className="min-w-0 flex-1">
                 <strong className="block text-[14px] text-[#172033]">{subject}</strong>
                 <div className="mt-1 flex flex-wrap items-baseline gap-1 text-[11px]">
