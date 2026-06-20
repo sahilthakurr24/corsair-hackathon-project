@@ -3,8 +3,6 @@ import { corsair } from "../../server/corsair";
 import { getAuthenticatedUserId } from "../auth";
 import { ListMessagesQuerySchema } from "./model";
 
-const LIST_HEADERS = ["From", "Subject", "Date"];
-
 export async function getMessages(
   req: Request,
   res: Response,
@@ -28,6 +26,10 @@ export async function getMessages(
       return res.status(200).json({ messages: [], nextPageToken: null });
     }
 
+    // format: "metadata" skips the message body (the expensive part). Don't add
+    // metadataHeaders here: @corsair-dev/gmail joins it into a single comma-separated
+    // query value, but Gmail's API requires it as a repeated param, so a joined value
+    // matches no header and silently returns an empty headers list.
     const emails = await Promise.all(
       messages
         .filter((msg) => msg.id)
@@ -35,7 +37,6 @@ export async function getMessages(
           tenant.gmail.api.messages.get({
             id: msg.id!,
             format: "metadata",
-            metadataHeaders: LIST_HEADERS,
           }),
         ),
     );
