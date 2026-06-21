@@ -69,3 +69,35 @@ export function extractMessageBody(payload?: MessagePart) {
 
   return { html, text };
 }
+
+export function encodeBase64Url(value: string) {
+  return Buffer.from(value, "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+// Build the base64url RFC 2822 MIME payload Gmail's drafts API expects as `raw`.
+// Headers with empty values are omitted so an incomplete draft is still valid.
+export function buildRawMimeMessage(input: {
+  to?: string;
+  cc?: string;
+  bcc?: string;
+  subject?: string;
+  body?: string;
+}) {
+  const lines = [
+    input.to ? `To: ${input.to}` : null,
+    input.cc ? `Cc: ${input.cc}` : null,
+    input.bcc ? `Bcc: ${input.bcc}` : null,
+    input.subject ? `Subject: ${input.subject}` : null,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    input.body ?? "",
+  ].filter((line): line is string => line !== null);
+
+  return encodeBase64Url(lines.join("\r\n"));
+}

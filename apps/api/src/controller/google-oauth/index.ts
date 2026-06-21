@@ -57,7 +57,7 @@ export async function completeGoogleOAuthCallback(
     });
 
     return res.redirect(
-      getWebRedirectUrl("/connections", {
+      getWebRedirectUrl("/chat", {
         oauth: "success",
         plugin: result.plugin,
       }),
@@ -66,7 +66,7 @@ export async function completeGoogleOAuthCallback(
     console.error(error);
 
     return res.redirect(
-      getWebRedirectUrl("/connections", {
+      getWebRedirectUrl("/chat", {
         oauth: "error",
       }),
     );

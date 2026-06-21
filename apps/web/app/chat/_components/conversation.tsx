@@ -168,12 +168,6 @@ export function Conversation({
       <ChatHeader
         icon="spark"
         title="CalMail Assistant"
-        status={
-          <>
-            <i className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#22b573]" />
-            Online
-          </>
-        }
         subtitle="AI-powered inbox & calendar"
       />
 
@@ -186,10 +180,10 @@ export function Conversation({
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-[13px] bg-[#eaf4ff] text-brand-blue">
               <Icon name="spark" size={25} />
             </span>
-            <h1 className="mt-[14px] mb-[6px] text-[20px] tracking-[-0.5px] md:text-[22px]">
+            <h1 className="mt-[14px] mb-[6px] text-[21px] tracking-[-0.5px] md:text-[23px] dark:text-dk-text">
               Hey {user?.firstName} How can I help today?
             </h1>
-            <p className="text-[11px] text-[#7b8798]">
+            <p className="text-[12px] text-[#7b8798] dark:text-dk-muted">
               Ask about your inbox, schedule, or let me handle a task.
             </p>
             <div className="mt-4 grid gap-[7px] md:flex md:flex-wrap md:justify-center">
@@ -201,7 +195,7 @@ export function Conversation({
                     setInput(prompt);
                     textareaRef.current?.focus();
                   }}
-                  className="w-full rounded-full border border-[#e0e7ef] bg-white px-[11px] py-2 text-[9px] text-[#526071] hover:border-[#9fcafb] hover:bg-[#f8fbff] hover:text-brand-blue md:w-auto"
+                  className="w-full rounded-full border border-[#e0e7ef] bg-white px-[11px] py-2 text-[10px] text-[#526071] hover:border-[#9fcafb] hover:bg-[#f8fbff] hover:text-brand-blue md:w-auto dark:border-dk-border dark:bg-dk-surface dark:text-dk-muted dark:hover:border-[#3a4a5e] dark:hover:bg-dk-surface-2"
                 >
                   {prompt}
                 </button>
@@ -233,15 +227,15 @@ export function Conversation({
             <div
               className={`min-w-0 max-w-[calc(100%-41px)] ${message.role === "user" ? "grid justify-items-end" : ""}`}
             >
-              <small className="mb-[6px] block text-[9px] text-[#98a2b3]">
+              <small className="mb-[6px] block text-[10px] text-[#98a2b3] dark:text-dk-muted">
                 {message.role === "user" ? "You" : "CalMail"} ·{" "}
                 {message.timestamp}
               </small>
               <p
-                className={`w-fit max-w-full rounded-[3px_11px_11px_11px] px-[13px] py-[11px] text-[12px] leading-[1.6] whitespace-pre-wrap [overflow-wrap:anywhere] ${
+                className={`w-fit max-w-full rounded-[3px_11px_11px_11px] px-[13px] py-[11px] text-[13px] leading-[1.6] whitespace-pre-wrap [overflow-wrap:anywhere] ${
                   message.role === "user"
-                    ? "rounded-[11px_3px_11px_11px] bg-[#eaf4ff] text-[#15599f]"
-                    : "bg-[#f6f8fb] text-[#344054]"
+                    ? "rounded-[11px_3px_11px_11px] bg-[#eaf4ff] text-[#15599f] dark:bg-[#16314e] dark:text-[#cfe5ff]"
+                    : "bg-[#f6f8fb] text-[#344054] dark:bg-dk-surface dark:text-[#d5dce4]"
                 }`}
               >
                 {message.content}
@@ -256,10 +250,10 @@ export function Conversation({
               <Icon name="spark" size={17} />
             </span>
             <div className="min-w-0 max-w-[calc(100%-41px)]">
-              <small className="mb-[6px] block text-[9px] text-[#98a2b3]">
+              <small className="mb-[6px] block text-[10px] text-[#98a2b3] dark:text-dk-muted">
                 CalMail is working
               </small>
-              <p className="flex w-12 gap-1 rounded-[3px_11px_11px_11px] bg-[#f6f8fb] px-[13px] py-[11px]">
+              <p className="flex w-12 gap-1 rounded-[3px_11px_11px_11px] bg-[#f6f8fb] px-[13px] py-[11px] dark:bg-dk-surface">
                 <i className="h-1.5 w-1.5 animate-[chat-bounce_1s_ease-in-out_infinite] rounded-full bg-[#8da0b7]" />
                 <i className="h-1.5 w-1.5 animate-[chat-bounce_1s_ease-in-out_infinite] rounded-full bg-[#8da0b7] [animation-delay:140ms]" />
                 <i className="h-1.5 w-1.5 animate-[chat-bounce_1s_ease-in-out_infinite] rounded-full bg-[#8da0b7] [animation-delay:280ms]" />
@@ -285,7 +279,7 @@ export function Conversation({
       </div>
 
       <form
-        className="mx-auto mb-[7px] w-[calc(100%-24px)] flex-none rounded-[11px] border border-[#d8e1eb] bg-white p-3 pb-[9px] shadow-[0_7px_22px_rgba(34,60,90,0.08)] focus-within:border-[#9bc9fc] focus-within:shadow-[0_0_0_3px_#eaf4ff,0_7px_22px_rgba(34,60,90,0.08)] md:w-[min(680px,calc(100%-40px))]"
+        className="mx-auto mb-[7px] w-[calc(100%-24px)] flex-none rounded-[11px] border border-[#d8e1eb] bg-white p-3 pb-[9px] shadow-[0_7px_22px_rgba(34,60,90,0.08)] focus-within:border-[#9bc9fc] focus-within:shadow-[0_0_0_3px_#eaf4ff,0_7px_22px_rgba(34,60,90,0.08)] md:w-[min(680px,calc(100%-40px))] dark:border-dk-border dark:bg-dk-surface dark:focus-within:border-[#3a6ea5] dark:focus-within:shadow-[0_0_0_3px_#16263b]"
         onSubmit={sendMessage}
       >
         <textarea
@@ -296,10 +290,10 @@ export function Conversation({
           placeholder="Ask CalMail anything…"
           rows={1}
           disabled={sending}
-          className="block max-h-[120px] min-h-6 w-full resize-none overflow-y-auto border-0 bg-transparent text-[12px] leading-[1.5] text-[#273449] outline-none placeholder:text-[#98a2b3]"
+          className="block max-h-[120px] min-h-6 w-full resize-none overflow-y-auto border-0 bg-transparent text-[13px] leading-[1.5] text-[#273449] outline-none placeholder:text-[#98a2b3] dark:text-dk-text dark:placeholder:text-dk-muted"
         />
         <div className="mt-[7px] flex items-center justify-between">
-          <span className="hidden text-[8px] text-[#a2adbb] md:inline">
+          <span className="hidden text-[8px] text-[#a2adbb] md:inline dark:text-dk-muted">
             Enter to send · Shift + Enter for a new line
           </span>
           <button
@@ -312,7 +306,7 @@ export function Conversation({
           </button>
         </div>
       </form>
-      <small className="flex-none px-3 pb-[10px] text-center text-[8px] text-[#a0aaba]">
+      <small className="flex-none px-3 pb-[10px] text-center text-[8px] text-[#a0aaba] dark:text-dk-muted">
         CalMail can make mistakes. Review important emails and calendar changes.
       </small>
     </>

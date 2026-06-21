@@ -247,339 +247,239 @@ function BriefCard({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function ProductPreview({
-  fullScreen = false,
+function PreviewUserMessage({
+  time,
+  children,
 }: {
-  fullScreen?: boolean;
+  time: string;
+  children: string;
 }) {
   return (
-    <div
-      className={
-        fullScreen
-          ? "grid h-[calc(100vh-32px)] w-full grid-cols-[220px_minmax(420px,1fr)_280px] overflow-hidden rounded-2xl text-[13px] shadow-[0_18px_55px_rgba(30,52,78,0.12)]"
-          : "ml-3.5 mt-[42px] grid h-[570px] grid-cols-[110px_1fr] overflow-hidden rounded-t-2xl border border-[#dfe6ef] text-[10px] shadow-[0_12px_35px_rgba(30,52,78,0.08)] sm:h-[620px] sm:grid-cols-[125px_1fr] lg:grid-cols-[145px_1fr_180px]"
-      }
-    >
-      <aside
-        className={`hidden flex-col border-r border-[#e8edf4] sm:flex ${
-          fullScreen ? "p-6" : "p-[17px_12px]"
-        }`}
-      >
-        <Brand variant={fullScreen ? "default" : "mini"} />
-        <button
-          className={`my-[18px] flex items-center rounded-md border border-[#e8edf4] bg-white text-[9px] ${
-            fullScreen ? "px-[10px] py-[10px] text-[12px]" : "p-[7px]"
-          }`}
-        >
-          <Icon name="plus" size={14} /> New Chat{" "}
-          <kbd className="ml-auto text-[8px] text-[#98a2b3]">⌘ K</kbd>
+    <article className="mb-[16px] flex flex-row-reverse gap-[9px]">
+      <span className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full bg-gradient-to-br from-[#f4b283] to-[#74b6ac] text-[8px] font-bold text-white">
+        SC
+      </span>
+      <div className="grid max-w-[80%] justify-items-end">
+        <small className="mb-[5px] block text-[7px] text-[#98a2b3]">
+          You · {time}
+        </small>
+        <p className="w-fit rounded-[11px_3px_11px_11px] bg-[#eaf4ff] px-[11px] py-[8px] text-[10px] leading-[1.55] text-[#15599f]">
+          {children}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function PreviewAssistantMessage({
+  time,
+  children,
+}: {
+  time: string;
+  children: string;
+}) {
+  return (
+    <article className="mb-[16px] flex gap-[9px]">
+      <span className="grid h-[26px] w-[26px] flex-none place-items-center rounded-lg bg-brand-blue text-white">
+        <Icon name="spark" size={14} />
+      </span>
+      <div className="grid max-w-[80%]">
+        <small className="mb-[5px] block text-[7px] text-[#98a2b3]">
+          CalMail · {time}
+        </small>
+        <p className="w-fit rounded-[3px_11px_11px_11px] bg-[#f6f8fb] px-[11px] py-[8px] text-[10px] leading-[1.55] text-[#344054]">
+          {children}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+export function ProductPreview() {
+  return (
+    <div className="ml-3.5 mt-[42px] grid h-[570px] grid-cols-[1fr] overflow-hidden rounded-t-2xl border border-[#dfe6ef] bg-white shadow-[0_12px_35px_rgba(30,52,78,0.08)] sm:h-[620px] sm:grid-cols-[162px_1fr] lg:grid-cols-[172px_1fr_196px]">
+      {/* Sidebar — mirrors apps/web/app/chat/layout.tsx */}
+      <aside className="hidden flex-col border-r border-[#e9edf3] bg-[#fbfcfe] px-3 py-4 sm:flex">
+        <Brand variant="mini" />
+        <button className="my-4 flex w-full items-center gap-2 rounded-lg border border-[#dde5ee] bg-white px-[10px] py-[8px] text-[11px] font-semibold text-[#344054]">
+          <Icon name="plus" size={13} />
+          New Chat
+          <kbd className="ml-auto text-[8px] font-medium text-[#98a2b3]">⌘ K</kbd>
         </button>
-        <nav className="grid gap-0.5">
-          <a
-            className={`flex items-center gap-[7px] rounded-md bg-[#eaf4ff] px-2 font-[650] text-brand-blue ${fullScreen ? "h-10 px-[11px] text-[12px]" : "h-[29px]"}`}
-          >
-            <Icon name="spark" className="w-[13px]" />
-            Chat
-          </a>
-          <a
-            className={`flex items-center gap-[7px] rounded-md px-2 text-[#667085] ${fullScreen ? "h-10 px-[11px] text-[12px]" : "h-[29px]"}`}
-          >
-            <Icon name="inbox" className="w-[13px]" />
-            Inbox <em className="ml-auto not-italic">12</em>
-          </a>
-          <a
-            className={`flex items-center gap-[7px] rounded-md px-2 text-[#667085] ${fullScreen ? "h-10 px-[11px] text-[12px]" : "h-[29px]"}`}
-          >
-            <Icon name="calendar" className="w-[13px]" />
+        <nav className="grid gap-1">
+          <span className="flex h-9 items-center gap-[10px] rounded-[7px] px-[11px] text-[11px] text-[#667085]">
+            <Icon name="inbox" size={15} />
+            Inbox
+          </span>
+          <span className="flex h-9 items-center gap-[10px] rounded-[7px] px-[11px] text-[11px] text-[#667085]">
+            <Icon name="calendar" size={15} />
             Calendar
-          </a>
-          <a
-            className={`flex items-center gap-[7px] rounded-md px-2 text-[#667085] ${fullScreen ? "h-10 px-[11px] text-[12px]" : "h-[29px]"}`}
-          >
-            <Icon name="mail" className="w-[13px]" />
+          </span>
+          <span className="flex h-9 items-center gap-[10px] rounded-[7px] px-[11px] text-[11px] text-[#667085]">
+            <Icon name="mail" size={15} />
             Drafts
-          </a>
-          <a
-            className={`flex items-center gap-[7px] rounded-md px-2 text-[#667085] ${fullScreen ? "h-10 px-[11px] text-[12px]" : "h-[29px]"}`}
-          >
-            <Icon name="tasks" className="w-[13px]" />
-            Tasks
-          </a>
-          <a
-            className={`flex items-center gap-[7px] rounded-md px-2 text-[#667085] ${fullScreen ? "h-10 px-[11px] text-[12px]" : "h-[29px]"}`}
-          >
-            <Icon name="workflow" className="w-[13px]" />
-            Contacts
-          </a>
+          </span>
+          <div className="flex h-9 items-center gap-[10px] rounded-[7px] bg-[#eaf4ff] pr-1 pl-[11px] text-[11px] font-semibold text-brand-blue">
+            <Icon name="spark" size={15} />
+            <span className="flex-1">Chat</span>
+            <span className="grid h-6 w-6 place-items-center text-[10px] leading-none">
+              ⌄
+            </span>
+          </div>
         </nav>
-        <div className="mt-auto flex items-center gap-[7px]">
-          <span
-            className={`grid place-items-center rounded-full bg-gradient-to-br from-[#f7b890] to-[#8cc5b8] text-[8px] ${
-              fullScreen ? "h-9 w-9 text-[10px]" : "h-[27px] w-[27px]"
-            }`}
-          >
+        <div className="mt-auto flex items-center gap-[8px] border-t border-[#e9edf3] pt-3">
+          <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-gradient-to-br from-[#f4b283] to-[#74b6ac] text-[9px] font-bold text-white">
             SC
           </span>
           <div className="grid min-w-0">
-            <b className={fullScreen ? "text-[11px]" : ""}>Sarah Chen</b>
-            <small
-              className={`text-[#98a2b3] ${fullScreen ? "text-[9px]" : "text-[7px]"}`}
-            >
+            <b className="text-[10px]">Sarah Chen</b>
+            <small className="truncate text-[8px] text-[#98a2b3]">
               sarah@company.com
             </small>
           </div>
-          <span className="ml-auto">⌄</span>
         </div>
       </aside>
 
+      {/* Main chat — mirrors apps/web/app/chat/_components/conversation.tsx */}
       <main className="flex min-w-0 flex-col bg-white">
-        <header
-          className={`flex items-center justify-between border-b border-[#e8edf4] ${
-            fullScreen ? "h-16 px-6" : "h-[50px] px-4"
-          }`}
-        >
-          <b>Summarize today&apos;s emails</b>
-          <span className="flex gap-[7px] text-[#98a2b3]">
-            <Icon name="clock" size={15} /> ☆ ···
-          </span>
+        <header className="flex h-[52px] flex-none items-center justify-between border-b border-[#e9edf3] px-4 sm:h-[58px]">
+          <div className="flex items-center gap-[10px]">
+            <span className="grid h-[30px] w-[30px] place-items-center rounded-lg bg-brand-blue text-white">
+              <Icon name="spark" size={16} />
+            </span>
+            <div className="grid">
+              <b className="text-[12px]">CalMail Assistant</b>
+              <small className="text-[8px] text-[#7f8b9e]">
+                AI-powered inbox &amp; calendar
+              </small>
+            </div>
+          </div>
+          <div className="hidden items-center gap-1.5 md:flex">
+            <span className="flex items-center gap-[5px] rounded-lg border border-[#b7e3c4] bg-white px-[7px] py-[5px] text-[9px] font-semibold text-[#475467]">
+              Gmail
+              <span className="h-1.5 w-1.5 rounded-full bg-[#1aa251]" />
+            </span>
+            <span className="flex items-center gap-[5px] rounded-lg border border-[#b7e3c4] bg-white px-[7px] py-[5px] text-[9px] font-semibold text-[#475467]">
+              Calendar
+              <span className="h-1.5 w-1.5 rounded-full bg-[#1aa251]" />
+            </span>
+          </div>
         </header>
-        <div
-          className={`flex-1 overflow-hidden ${
-            fullScreen
-              ? "overflow-y-auto p-[28px_30px_12px]"
-              : "p-[22px_20px_10px]"
-          }`}
-        >
-          <div
-            className={`flex mb-[15px] ${fullScreen ? "gap-3 mb-[22px]" : "gap-[9px]"}`}
-          >
-            <span
-              className={`grid place-items-center rounded-full bg-[#0d75ef] text-white text-[8px] ${
-                fullScreen ? "h-[31px] w-[31px]" : "h-[23px] w-[23px]"
-              }`}
-            >
-              S
-            </span>
-            <div>
-              <small
-                className={`mb-[5px] block text-[#98a2b3] ${fullScreen ? "text-[9px]" : "text-[7px]"}`}
-              >
-                You · 9:41 AM
-              </small>
-              <p className={fullScreen ? "text-[12px]" : "text-[9px]"}>
-                Summarize my unread emails.
-              </p>
-            </div>
-          </div>
-          <div
-            className={`flex mb-[15px] ${fullScreen ? "gap-3 mb-[22px]" : "gap-[9px]"}`}
-          >
-            <span
-              className={`grid flex-none place-items-center rounded-md bg-brand-blue text-white ${
-                fullScreen ? "h-[31px] w-[31px]" : "h-6 w-6"
-              }`}
-            >
-              <Icon name="mail" size={16} />
-            </span>
-            <div
-              className={
-                fullScreen ? "w-[min(100%,500px)]" : "w-[min(100%,340px)]"
-              }
-            >
-              <small
-                className={`mb-[5px] block text-[#98a2b3] ${fullScreen ? "text-[9px]" : "text-[7px]"}`}
-              >
-                CalMail · 9:41 AM
-              </small>
-              <p className={fullScreen ? "text-[12px]" : "text-[9px]"}>
-                You have 12 unread emails. Here&apos;s a summary:
-              </p>
-              <div
-                className={`mt-2 rounded-[7px] border border-[#e8edf4] ${fullScreen ? "p-[10px] mt-[10px]" : "p-[7px]"}`}
-              >
-                {[
-                  [
-                    "!",
-                    "#fff0ed",
-                    "#ef6a57",
-                    "A reply needs your action",
-                    "Client follow-up, approval, and responses",
-                  ],
-                  [
-                    "↗",
-                    "#eef7ff",
-                    "#3989df",
-                    "5 new updates",
-                    "Team updates, project progress, and notifications",
-                  ],
-                  [
-                    "◷",
-                    "#fff8e5",
-                    "#e3a42a",
-                    "3 are newsletters",
-                    "Marketing, product updates, and insights",
-                  ],
-                ].map(([mark, bg, fg, title, desc], i, arr) => (
-                  <p
-                    key={title}
-                    className={`flex gap-[7px] p-[5px] ${i < arr.length - 1 ? "border-b border-[#f1f3f6]" : ""}`}
-                  >
-                    <i
-                      style={{ background: bg, color: fg }}
-                      className={`grid flex-none place-items-center rounded-full not-italic ${
-                        fullScreen ? "h-6 w-6" : "h-[18px] w-[18px]"
-                      }`}
-                    >
-                      {mark}
-                    </i>
-                    <span className="grid">
-                      <b>{title}</b>
-                      <small
-                        className={`text-[#98a2b3] ${fullScreen ? "text-[9px]" : "text-[7px]"}`}
-                      >
-                        {desc}
-                      </small>
-                    </span>
-                  </p>
-                ))}
-                <a
-                  className={`flex items-center justify-end gap-1 font-[650] cursor-pointer ${
-                    fullScreen ? "pt-[9px] text-[10px]" : "pt-[7px] text-[8px]"
-                  }`}
-                >
-                  View all <Icon name="arrow" size={13} />
-                </a>
-              </div>
-            </div>
-          </div>
-          <div
-            className={`flex mb-[15px] ${fullScreen ? "gap-3 mb-[22px]" : "gap-[9px]"}`}
-          >
-            <span
-              className={`grid place-items-center rounded-full bg-[#0d75ef] text-white text-[8px] ${
-                fullScreen ? "h-[31px] w-[31px]" : "h-[23px] w-[23px]"
-              }`}
-            >
-              S
-            </span>
-            <div>
-              <small
-                className={`mb-[5px] block text-[#98a2b3] ${fullScreen ? "text-[9px]" : "text-[7px]"}`}
-              >
-                You · 9:43 AM
-              </small>
-              <p className={fullScreen ? "text-[12px]" : "text-[9px]"}>
-                Schedule a meeting with Rahul next week.
-              </p>
-            </div>
-          </div>
-          <div className={`flex ${fullScreen ? "gap-3" : "gap-[9px]"}`}>
-            <span
-              className={`grid flex-none place-items-center rounded-md bg-brand-blue text-white ${
-                fullScreen ? "h-[31px] w-[31px]" : "h-6 w-6"
-              }`}
-            >
-              <Icon name="calendar" size={16} />
-            </span>
-            <div
-              className={
-                fullScreen ? "w-[min(100%,500px)]" : "w-[min(100%,340px)]"
-              }
-            >
-              <small
-                className={`mb-[5px] block text-[#98a2b3] ${fullScreen ? "text-[9px]" : "text-[7px]"}`}
-              >
-                CalMail · 9:43 AM
-              </small>
-              <p className={fullScreen ? "text-[12px]" : "text-[9px]"}>
-                I found 3 available time slots that work for both you and Rahul.
-              </p>
-              <div
-                className={`mt-2 rounded-[7px] border border-[#e8edf4] ${fullScreen ? "p-[10px] mt-[10px]" : "p-[7px]"}`}
-              >
-                {[
-                  ["Tue, 14 May", "2:00 PM – 3:00 PM"],
-                  ["Wed, 15 May", "11:00 AM – 12:00 PM"],
-                  ["Thu, 16 May", "4:00 PM – 5:00 PM"],
-                ].map(([day, time], i) => (
-                  <p
-                    key={day}
-                    className={`flex justify-between ${fullScreen ? "p-[7px_5px]" : "p-[4px_3px]"} ${
-                      i > 0 ? "border-t border-[#f0f2f5]" : ""
-                    }`}
-                  >
-                    <b>{day}</b>
-                    <span>{time}</span>
-                  </p>
-                ))}
-                <a
-                  className={`flex items-center justify-end gap-1 font-[650] cursor-pointer ${
-                    fullScreen ? "pt-[9px] text-[10px]" : "pt-[7px] text-[8px]"
-                  }`}
-                >
-                  <Icon name="calendar" size={13} /> Schedule meeting{" "}
-                  <Icon name="arrow" size={13} />
-                </a>
-              </div>
-            </div>
-          </div>
+
+        <div className="flex-1 overflow-hidden px-4 py-4">
+          <PreviewUserMessage time="9:41 AM">
+            Summarize my unread emails.
+          </PreviewUserMessage>
+          <PreviewAssistantMessage time="9:41 AM">
+            You have 12 unread emails — 1 needs a reply, 5 are team updates, and 3
+            are newsletters.
+          </PreviewAssistantMessage>
+          <PreviewUserMessage time="9:43 AM">
+            Schedule a meeting with Rahul next week.
+          </PreviewUserMessage>
+          <PreviewAssistantMessage time="9:43 AM">
+            Done — created “Meeting with Rahul” on Tue, 14 May, 2:00–3:00 PM and
+            invited Rahul.
+          </PreviewAssistantMessage>
         </div>
-        <div
-          className={`grid grid-cols-[1fr_auto] items-start rounded-lg border border-[#dce3eb] text-[#98a2b3] ${
-            fullScreen
-              ? "mx-6 mb-5 h-[68px] p-[11px_12px] text-[11px]"
-              : "mx-[15px] mb-[14px] h-[55px] p-[9px_8px]"
-          }`}
-        >
-          <span className={fullScreen ? "text-[11px]" : "text-[9px]"}>
-            Ask CalMail anything...
+
+        <div className="mx-3 mb-3 flex-none rounded-[11px] border border-[#d8e1eb] bg-white p-3 pb-[9px] shadow-[0_7px_22px_rgba(34,60,90,0.08)]">
+          <span className="block text-[11px] text-[#98a2b3]">
+            Ask CalMail anything…
           </span>
-          <div
-            className={`flex items-end gap-2 self-end ${fullScreen ? "text-[11px]" : "text-[9px]"}`}
-          >
-            <span>⌘</span>
-            <span>📎</span>
-            <span>☺</span>
+          <div className="mt-[7px] flex items-center justify-between">
+            <span className="hidden text-[8px] text-[#a2adbb] sm:inline">
+              Enter to send · Shift + Enter for a new line
+            </span>
+            <span className="grid h-7 w-7 place-items-center rounded-[7px] bg-brand-blue text-white">
+              <Icon name="send" size={15} />
+            </span>
           </div>
-          <button
-            className={`col-start-2 row-span-2 row-start-1 grid place-items-center rounded-md border-0 bg-brand-blue text-white ${
-              fullScreen ? "h-[34px] w-[34px]" : "h-7 w-7"
-            }`}
-          >
-            <Icon name="send" size={16} />
-          </button>
         </div>
       </main>
 
-      <aside
-        className={`hidden border-l border-[#e8edf4] bg-[#f8fafc] lg:block ${
-          fullScreen ? "p-5" : "p-[15px_10px]"
-        }`}
-      >
-        <MiniEvent floating={false} />
-        <div className="mb-3 rounded-lg border border-[#e8edf4] bg-white p-[11px]">
-          <div className="mb-3 flex items-center gap-[7px] text-[11px]">
-            <span className="grid place-items-center text-brand-blue">
-              <Icon name="spark" size={15} />
-            </span>
-            <b className="flex-1">AI Draft</b>
-            <span className="tracking-[2px] text-[#98a2b3]">•••</span>
-          </div>
-          <strong className="block text-[12px]">Reply to Alex</strong>
-          <small className="mt-[3px] block text-[10px] text-[#98a2b3]">
-            Project Update
-          </small>
-          <p className="my-[10px] text-[8px] leading-[1.5]">
-            Hi Alex,
-            <br />
-            Thanks for the update. The progress looks great! I have a few
-            suggestions...
-          </p>
-          <button className="flex w-full items-center justify-between rounded-md bg-[#f6f8fb] p-[7px] text-[8px]">
-            Review draft <Icon name="arrow" size={13} />
-          </button>
+      {/* Right rail — mirrors apps/web/app/chat/_components/right-rail.tsx */}
+      <aside className="hidden flex-col gap-2.5 overflow-hidden border-l border-[#e9edf3] bg-[#f8fafc] p-3 lg:flex">
+        <div className="flex items-center justify-between px-0.5">
+          <b className="text-[12px]">Today</b>
+          <span className="text-[8px] text-[#98a2b3]">May 14</span>
         </div>
-        <BriefCard compact />
+
+        <article className="rounded-[9px] border border-[#e7ecf2] bg-white p-3">
+          <header className="mb-2 flex items-center gap-[6px]">
+            <span className="text-brand-blue">
+              <Icon name="calendar" size={14} />
+            </span>
+            <b className="text-[9px]">Upcoming Meeting</b>
+          </header>
+          <strong className="block text-[10px]">Design Review</strong>
+          <small className="mt-[2px] block text-[8px] text-[#8793a4]">
+            Today, 2:00 – 3:00 PM
+          </small>
+          <div className="mt-2 flex">
+            <span className="-mr-[5px] grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-[#dcecff] text-[6px] text-[#44617f]">
+              SC
+            </span>
+            <span className="-mr-[5px] grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-[#dcecff] text-[6px] text-[#44617f]">
+              RK
+            </span>
+            <span className="grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-[#dcecff] text-[6px] text-[#44617f]">
+              +2
+            </span>
+          </div>
+          <span className="mt-2 block rounded-md bg-[#edf5ff] py-[6px] text-center text-[8px] font-bold text-[#1772d3]">
+            Join meeting
+          </span>
+        </article>
+
+        <article className="rounded-[9px] border border-[#e7ecf2] bg-white p-3">
+          <header className="mb-2 flex items-center gap-[6px]">
+            <span className="text-brand-blue">
+              <Icon name="spark" size={14} />
+            </span>
+            <b className="text-[9px]">Latest Draft</b>
+          </header>
+          <strong className="block text-[10px]">Reply to Alex</strong>
+          <small className="mt-[2px] block text-[8px] text-[#8793a4]">
+            To: alex@company.com
+          </small>
+          <p className="my-[7px] text-[8px] leading-[1.5] text-[#596779]">
+            Hi Alex, thanks for the update — the progress looks great. I have a
+            few suggestions…
+          </p>
+          <span className="block rounded-md bg-[#edf5ff] py-[6px] text-center text-[8px] font-bold text-[#1772d3]">
+            Review draft
+          </span>
+        </article>
+
+        <article className="rounded-[9px] border border-[#e7ecf2] bg-white p-3">
+          <header className="mb-2 flex items-center gap-[6px]">
+            <span className="text-brand-blue">
+              <Icon name="tasks" size={14} />
+            </span>
+            <b className="text-[9px]">Today&apos;s Brief</b>
+          </header>
+          <ul className="grid gap-[7px]">
+            <li className="flex items-center gap-[6px] text-[8px] text-[#596779]">
+              <span className="text-brand-blue">
+                <Icon name="mail" size={12} />
+              </span>
+              <b>12</b> unread emails
+            </li>
+            <li className="flex items-center gap-[6px] text-[8px] text-[#596779]">
+              <span className="text-brand-blue">
+                <Icon name="calendar" size={12} />
+              </span>
+              <b>3</b> meetings today
+            </li>
+            <li className="flex items-center gap-[6px] text-[8px] text-[#596779]">
+              <span className="text-brand-blue">
+                <Icon name="mail" size={12} />
+              </span>
+              <b>4</b> drafts
+            </li>
+          </ul>
+        </article>
       </aside>
     </div>
   );

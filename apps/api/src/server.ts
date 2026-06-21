@@ -8,6 +8,7 @@ import webhookRouter from "./routes/webhook.route";
 import sseRouter from "./routes/sse.route";
 import gmailRouter from "./routes/gmail.route";
 import googleCalendarRouter from "./routes/calendar.route";
+import overviewRouter from "./routes/overview.route";
 import { env } from "./env";
 
 export const app: Express = express();
@@ -36,5 +37,6 @@ app.use("/ai", chatRouter);
 app.use("/sse", sseRouter);
 app.use("/gmail", gmailRouter);
 app.use("/calendar", googleCalendarRouter);
+app.use("/overview", overviewRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

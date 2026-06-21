@@ -7,6 +7,7 @@ import { ChatHeader } from "../_components/chat-header";
 import { useServerEvent, useServerEventsStatus } from "../_components/server-events";
 import { useInboxCache } from "./_components/inbox-cache";
 import { MailListItem } from "./_components/mail-list-item";
+import { Skeleton } from "../_components/skeleton";
 import { type GmailMessage, getErrorMessage } from "./_lib/gmail";
 
 type GmailListResponse = {
@@ -122,14 +123,14 @@ export default function InboxView() {
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex flex-none flex-wrap items-center justify-between gap-3 px-5 pt-[14px] md:px-[54px]">
-          <p className="text-[10px] text-[#7f8b9e]">
+          <p className="text-[11px] text-[#7f8b9e] dark:text-dk-muted">
             Showing the latest messages from your connected Gmail account.
           </p>
           <button
             type="button"
             onClick={() => void fetchInbox({ append: false })}
             disabled={loading}
-            className="flex-none rounded-md border border-[#d8e1eb] bg-white px-3 py-[7px] text-[9px] font-semibold text-[#344054] disabled:cursor-not-allowed disabled:text-[#98a2b3]"
+            className="flex-none rounded-md border border-[#d8e1eb] bg-white px-3 py-[7px] text-[9px] font-semibold text-[#344054] disabled:cursor-not-allowed disabled:text-[#98a2b3] dark:border-dk-border dark:bg-dk-surface dark:text-dk-text"
           >
             {loading ? "Refreshing…" : "Refresh"}
           </button>
@@ -140,11 +141,25 @@ export default function InboxView() {
           className="min-h-0 flex-1 overflow-y-auto px-5 py-[14px] pb-6 md:px-[54px]"
         >
           {loading && messages.length === 0 && (
-            <p className="my-10 text-center text-[11px] text-[#98a2b3]">Loading your inbox…</p>
+            <div className="grid gap-2">
+              {Array.from({ length: 7 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 rounded-lg border border-[#eef1f5] px-3 py-[11px] dark:border-dk-border"
+                >
+                  <Skeleton className="h-9 w-9 flex-none rounded-full" />
+                  <div className="grid flex-1 gap-2">
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                  <Skeleton className="h-2.5 w-10 flex-none" />
+                </div>
+              ))}
+            </div>
           )}
 
           {error && (
-            <div className="mb-5 grid max-w-[680px] grid-cols-[1fr_auto] gap-x-3 gap-y-[3px] rounded-lg border border-[#f4c7c3] bg-[#fff6f5] px-[13px] py-[11px] text-[10px] text-[#9d322b]">
+            <div className="mb-5 grid max-w-[680px] grid-cols-[1fr_auto] gap-x-3 gap-y-[3px] rounded-lg border border-[#f4c7c3] bg-[#fff6f5] px-[13px] py-[11px] text-[10px] text-[#9d322b] dark:border-[#5a2c2c] dark:bg-[#2a1517] dark:text-[#f0a8a0]">
               <b className="col-start-1">Couldn’t load inbox</b>
               <span className="col-start-1">{error}</span>
               <button
@@ -158,7 +173,7 @@ export default function InboxView() {
           )}
 
           {!loading && !error && loaded && messages.length === 0 && (
-            <p className="my-10 text-center text-[11px] text-[#98a2b3]">No messages found.</p>
+            <p className="my-10 text-center text-[11px] text-[#98a2b3] dark:text-dk-muted">No messages found.</p>
           )}
 
           {messages.map((message) => (
@@ -167,7 +182,20 @@ export default function InboxView() {
 
           {nextPageToken && <div ref={sentinelRef} className="h-1" />}
           {loadingMore && (
-            <p className="py-3 text-center text-[10px] text-[#98a2b3]">Loading more…</p>
+            <div className="grid gap-2 pt-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 rounded-lg border border-[#eef1f5] px-3 py-[11px] dark:border-dk-border"
+                >
+                  <Skeleton className="h-9 w-9 flex-none rounded-full" />
+                  <div className="grid flex-1 gap-2">
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

@@ -16,6 +16,10 @@ const envSchema = z.object({
   CORSAIR_KEK: z.string().describe("encryption key for corsair"),
   DATABASE_URL: z.string().describe("database url"),
   OPENAI_API_KEY: z.string().describe("open-ai keys"),
+  OPENAI_MODEL: z
+    .string()
+    .default("gpt-4o-mini")
+    .describe("OpenAI model for the assistant agent"),
   CORSAIR_TENANT_ID: z.string().default("user_3EzDZVik1Xgbtzr8FkGmqyVuxxo"),
   GOOGLE_CLIENT_ID: z.string().describe("google client id"),
   CLERK_PUBLISHABLE_KEY: z.string().optional(),

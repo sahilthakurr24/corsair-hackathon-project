@@ -92,7 +92,7 @@ export default function CalendarView() {
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-[14px] md:px-[54px]">
         {error && (
-          <div className="mb-5 grid max-w-[680px] grid-cols-[1fr_auto] gap-x-3 gap-y-[3px] rounded-lg border border-[#f4c7c3] bg-[#fff6f5] px-[13px] py-[11px] text-[10px] text-[#9d322b]">
+          <div className="mb-5 grid max-w-[680px] grid-cols-[1fr_auto] gap-x-3 gap-y-[3px] rounded-lg border border-[#f4c7c3] bg-[#fff6f5] px-[13px] py-[11px] text-[10px] text-[#9d322b] dark:border-[#5a2c2c] dark:bg-[#2a1517] dark:text-[#f0a8a0]">
             <b className="col-start-1">Couldn’t load calendar</b>
             <span className="col-start-1">{error}</span>
             <button
@@ -105,7 +105,7 @@ export default function CalendarView() {
           </div>
         )}
 
-        <div className="rounded-[12px] border border-[#e7ecf2] bg-white p-3 text-[13px]">
+        <div className="calendar-surface rounded-[12px] border border-[#e7ecf2] bg-white p-3 text-[13px] dark:border-dk-border dark:bg-dk-surface">
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"

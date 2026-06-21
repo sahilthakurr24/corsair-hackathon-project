@@ -17,3 +17,16 @@ export const ListMessagesQuerySchema = z.object({
 export const MessageIdParamSchema = z.object({
   id: z.string().trim().min(1),
 });
+
+export const DraftIdParamSchema = z.object({
+  id: z.string().trim().min(1),
+});
+
+// Drafts can be incomplete, so every field is optional and defaults to empty.
+export const DraftBodySchema = z.object({
+  to: z.string().trim().optional().default(""),
+  cc: z.string().trim().optional().default(""),
+  bcc: z.string().trim().optional().default(""),
+  subject: z.string().optional().default(""),
+  body: z.string().optional().default(""),
+});

@@ -2,6 +2,7 @@ import "dotenv/config";
 import { OpenAIAgentsProvider } from "@corsair-dev/mcp";
 import { Agent, run, tool, user, assistant } from "@openai/agents";
 import { z } from "zod";
+import { env } from "./env";
 import { corsairForTenant } from "./server/corsair";
 import { userService } from "./services";
 
@@ -104,6 +105,278 @@ function createSendProfessionalGmailTool(
   });
 }
 
+function getHeaderValue(
+  headers: Array<{ name?: string; value?: string }> | undefined,
+  name: string,
+) {
+  return (
+    headers?.find((header) => header.name?.toLowerCase() === name.toLowerCase())
+      ?.value ?? ""
+  );
+}
+
+// Add days to a YYYY-MM-DD string without local-timezone drift.
+function addDaysToDateOnly(dateOnly: string, days: number) {
+  const date = new Date(`${dateOnly}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+// Default a timed event's end to one hour after start, preserving the naive
+// (no-offset) format when the start has no timezone offset.
+function defaultTimedEnd(start: string) {
+  const isNaive = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(start);
+  if (isNaive) {
+    const date = new Date(`${start.length === 16 ? `${start}:00` : start}Z`);
+    date.setUTCHours(date.getUTCHours() + 1);
+    return date.toISOString().slice(0, 19);
+  }
+  return new Date(new Date(start).getTime() + 60 * 60 * 1000).toISOString();
+}
+
+// Dedicated, deterministic Calendar/Gmail tools. The generic discovery path
+// (list_operations -> get_schema -> run_script) is unreliable on smaller models
+// for these common actions — especially the nested { calendarId, event } shape —
+// so these hand-built tools remove the guesswork, mirroring send_professional_gmail.
+function createCalendarEventTool(tenantCorsair: TenantCorsair) {
+  return tool({
+    name: "create_calendar_event",
+    description:
+      "Create a Google Calendar event on the user's connected calendar. Always prefer this over discovering googlecalendar.events.create: it builds the correct nested { calendarId, event } shape, handles all-day vs timed events, and computes the exclusive all-day end date for you.",
+    parameters: z.object({
+      title: z.string().min(1).describe("Concise event title/summary."),
+      description: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Optional details/notes shown in the event body."),
+      location: z.string().nullable().optional().describe("Optional location."),
+      startDate: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "All-day start date as YYYY-MM-DD. Use this (not startDateTime) for all-day events.",
+        ),
+      endDate: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "All-day INCLUSIVE last date as YYYY-MM-DD. Defaults to startDate (single day).",
+        ),
+      startDateTime: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "Timed start as ISO 8601, e.g. 2026-08-12T14:00:00. Use for events with a specific time.",
+        ),
+      endDateTime: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "Timed end as ISO 8601. Defaults to one hour after startDateTime.",
+        ),
+      timeZone: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "IANA timezone for timed events, e.g. 'Asia/Kolkata' or 'America/New_York'. Strongly recommended for timed events.",
+        ),
+      attendees: z
+        .array(z.string().email())
+        .nullable()
+        .optional()
+        .describe("Attendee email addresses, only if explicitly provided."),
+      recurrence: z
+        .array(z.string())
+        .nullable()
+        .optional()
+        .describe(
+          "RRULE strings, e.g. ['RRULE:FREQ=YEARLY'] for a yearly (birthday/anniversary) event.",
+        ),
+      calendarId: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Calendar id. Defaults to 'primary'."),
+    }),
+    execute: async (input) => {
+      const calendarApi = (tenantCorsair as any).googlecalendar?.api;
+      if (!calendarApi?.events?.create) {
+        throw new Error(
+          "Corsair Google Calendar events.create endpoint is unavailable.",
+        );
+      }
+
+      const event: Record<string, unknown> = { summary: input.title };
+      if (input.description) event.description = input.description;
+      if (input.location) event.location = input.location;
+      if (input.attendees?.length) {
+        event.attendees = input.attendees.map((email) => ({ email }));
+      }
+      if (input.recurrence?.length) event.recurrence = input.recurrence;
+
+      if (input.startDate) {
+        const endInclusive = input.endDate ?? input.startDate;
+        event.start = { date: input.startDate };
+        event.end = { date: addDaysToDateOnly(endInclusive, 1) };
+      } else if (input.startDateTime) {
+        const end = input.endDateTime ?? defaultTimedEnd(input.startDateTime);
+        const zone = input.timeZone ? { timeZone: input.timeZone } : {};
+        event.start = { dateTime: input.startDateTime, ...zone };
+        event.end = { dateTime: end, ...zone };
+      } else {
+        throw new Error(
+          "Provide either startDate (all-day) or startDateTime (timed).",
+        );
+      }
+
+      const created = await calendarApi.events.create({
+        calendarId: input.calendarId ?? "primary",
+        event,
+      });
+
+      return JSON.stringify({
+        ok: true,
+        id: created?.id,
+        htmlLink: created?.htmlLink,
+        summary: created?.summary ?? input.title,
+        start: created?.start ?? event.start,
+        end: created?.end ?? event.end,
+      });
+    },
+  });
+}
+
+function createListCalendarEventsTool(tenantCorsair: TenantCorsair) {
+  return tool({
+    name: "list_calendar_events",
+    description:
+      "List Google Calendar events in a time range from the user's connected calendar. Prefer this for 'what's on my calendar', availability, and schedule summaries instead of discovering operations.",
+    parameters: z.object({
+      timeMin: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "ISO 8601 lower bound with timezone offset (e.g. 2026-06-21T00:00:00Z). Defaults to now.",
+        ),
+      timeMax: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("ISO 8601 upper bound with timezone offset. Optional."),
+      maxResults: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .nullable()
+        .optional()
+        .describe("Maximum number of events. Defaults to 20."),
+    }),
+    execute: async (input) => {
+      const calendarApi = (tenantCorsair as any).googlecalendar?.api;
+      if (!calendarApi?.events?.getMany) {
+        throw new Error(
+          "Corsair Google Calendar events.getMany endpoint is unavailable.",
+        );
+      }
+
+      const response = await calendarApi.events.getMany({
+        timeMin: input.timeMin ?? new Date().toISOString(),
+        timeMax: input.timeMax ?? undefined,
+        maxResults: input.maxResults ?? 20,
+        singleEvents: true,
+        orderBy: "startTime",
+      });
+
+      const events = (response?.items ?? []).map((item: any) => ({
+        id: item.id,
+        summary: item.summary ?? "(no title)",
+        start: item.start?.dateTime ?? item.start?.date ?? null,
+        end: item.end?.dateTime ?? item.end?.date ?? null,
+        location: item.location ?? null,
+        attendees: (item.attendees ?? [])
+          .map((attendee: any) => attendee.email)
+          .filter(Boolean),
+        htmlLink: item.htmlLink ?? null,
+      }));
+
+      return JSON.stringify({ ok: true, count: events.length, events });
+    },
+  });
+}
+
+function createListRecentEmailsTool(tenantCorsair: TenantCorsair) {
+  return tool({
+    name: "list_recent_emails",
+    description:
+      "Fetch recent Gmail messages (from, subject, date, snippet, unread flag) from the user's connected inbox. Prefer this for summarizing emails, 'latest emails', 'unread', and 'who emailed me' instead of discovering operations. To read a full message body, follow up via run_script with gmail.api.messages.get.",
+    parameters: z.object({
+      query: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "Gmail search query, e.g. 'is:unread', 'from:alice@example.com', 'newer_than:1d'. Optional.",
+        ),
+      maxResults: z
+        .number()
+        .int()
+        .min(1)
+        .max(25)
+        .nullable()
+        .optional()
+        .describe("Maximum number of messages. Defaults to 10."),
+    }),
+    execute: async (input) => {
+      const gmailApi = (tenantCorsair as any).gmail?.api;
+      if (!gmailApi?.messages?.list) {
+        throw new Error("Corsair Gmail messages.list endpoint is unavailable.");
+      }
+
+      const list = await gmailApi.messages.list({
+        maxResults: input.maxResults ?? 10,
+        q: input.query ?? undefined,
+      });
+
+      const messages = list?.messages ?? [];
+      if (!messages.length) {
+        return JSON.stringify({ ok: true, count: 0, emails: [] });
+      }
+
+      const detailed = await Promise.all(
+        messages
+          .filter((message: any) => message.id)
+          .map((message: any) =>
+            gmailApi.messages.get({ id: message.id, format: "metadata" }),
+          ),
+      );
+
+      const emails = detailed.map((message: any) => {
+        const headers = message?.payload?.headers;
+        return {
+          id: message?.id,
+          threadId: message?.threadId,
+          from: getHeaderValue(headers, "From"),
+          to: getHeaderValue(headers, "To"),
+          subject: getHeaderValue(headers, "Subject"),
+          date: getHeaderValue(headers, "Date"),
+          snippet: message?.snippet ?? "",
+          unread: (message?.labelIds ?? []).includes("UNREAD"),
+        };
+      });
+
+      return JSON.stringify({ ok: true, count: emails.length, emails });
+    },
+  });
+}
+
 const buildInstructions = (today: string, senderName: string | null) =>
   [
     "You are a professional AI assistant for a signed-in user. You can help the user manage Gmail and Google Calendar through Corsair built-in tools.",
@@ -111,9 +384,16 @@ const buildInstructions = (today: string, senderName: string | null) =>
       ? `The signed-in user's name is ${senderName}. Use this name when signing emails on the user's behalf.`
       : "The signed-in user's name is unavailable. Do not invent a name when signing emails.",
     "",
+    "Preferred high-level tools (use these first — they are reliable and need no discovery):",
+    "- create_calendar_event: create a Google Calendar event. ALWAYS use this to add/set events instead of run_script + googlecalendar.events.create. Pass flat fields (title, startDate or startDateTime, etc.); it builds the correct nested shape and the exclusive all-day end date for you.",
+    "- list_calendar_events: read calendar events for a range (schedule, availability, 'what's on my calendar').",
+    "- list_recent_emails: fetch recent inbox messages (from/subject/date/snippet/unread) for summaries, 'latest emails', 'unread', 'who emailed me'. Supports a Gmail query like 'is:unread' or 'from:x@y.com'.",
+    "- send_professional_gmail: send a new email.",
+    "- Only fall back to list_operations/get_schema/run_script for operations these high-level tools do not cover (e.g. updating/deleting a specific event, labels, reading a full message body via gmail.api.messages.get).",
+    "",
     "General tool rules:",
-    "- The only callable tools are list_operations, get_schema, run_script, corsair_setup, request_permission, and send_professional_gmail. There is no other tool.",
-    "- Operation paths such as gmail.api.messages.list or googlecalendar.events.list are NOT tools and can NEVER be called by name. They are plain strings: pass them to get_schema as the path argument, or use them inside run_script's JavaScript code, e.g. run_script({ code: \"const r = await corsair.gmail.api.messages.list({}); return r;\" }).",
+    "- The callable tools are create_calendar_event, list_calendar_events, list_recent_emails, send_professional_gmail, list_operations, get_schema, run_script, corsair_setup, and request_permission. There is no other tool.",
+    '- Operation paths such as gmail.api.messages.list or googlecalendar.events.list are NOT tools and can NEVER be called by name. They are plain strings: pass them to get_schema as the path argument, or use them inside run_script\'s JavaScript code, e.g. run_script({ code: "const r = await corsair.gmail.api.messages.list({}); return r;" }).',
     "- If you are about to call a tool whose name contains a dot (like 'gmail.api.messages.list'), stop — that tool does not exist. Use run_script instead.",
     "- Use list_operations to discover available Corsair APIs when needed.",
     "- Use get_schema before calling an operation if you are not certain about the exact argument shape.",
@@ -123,42 +403,42 @@ const buildInstructions = (today: string, senderName: string | null) =>
     `- Today is ${today}. When the user gives a month and day without a year, use the next upcoming occurrence from today's date.`,
     "",
     "",
-"Corsair operation rules:",
-"- Gmail and Calendar data must be accessed through Corsair operations, executed via run_script.",
-"- Never invent tool names.",
-"- Never invent operation names.",
-"- Only use operation names that are discovered from Corsair.",
-"- Before using an operation, discover available operations if necessary.",
-"- When operation arguments are unclear, retrieve the schema first.",
-"- Execute discovered operations through run_script. An operation name is a value you put inside run_script's code, never a tool you call directly.",
-"- Do not assume Gmail operation names exist until they are discovered.",
-"- Do not assume Calendar operation names exist until they are discovered.",
-"- If Corsair exposes an operation such as gmail.api.messages.list, use the exact discovered name as a property path inside run_script's code (corsair.gmail.api.messages.list(...)), not as a tool name.",
-"- Always use the exact operation name returned by Corsair.",
-"- Never transform, shorten, rename, or approximate a discovered operation name.",
-"- Use Corsair as the source of truth for available operations.",
-"",
-"Corsair workflow:",
-"- User asks for account data.",
-"- Discover available operations.",
-"- Identify the best matching Corsair operation.",
-"- Retrieve schema if needed.",
-"- Execute operation through run_script.",
-"- Analyze results.",
-"- Continue calling additional Corsair operations if required.",
-"- Only generate the final answer after sufficient data has been retrieved.",
-"",
-"Operation naming:",
-"- Operation names may contain multiple namespaces such as corsair.gmail.api.messages.list.",
-"- Preserve the full operation name exactly as discovered.",
-"- Exact operation names are more important than assumptions.",
-"- Never substitute one operation name for another.",
-"",
-"Data retrieval priority:",
-"- If the user asks for emails, retrieve emails through Corsair operations before responding.",
-"- If the user asks for calendar events, retrieve calendar data through Corsair operations before responding.",
-"- If the user asks for inbox summaries, first retrieve inbox data through Corsair operations.",
-"- If the user asks for account-specific information, retrieve real account data before responding.",
+    "Corsair operation rules:",
+    "- Gmail and Calendar data must be accessed through Corsair operations, executed via run_script.",
+    "- Never invent tool names.",
+    "- Never invent operation names.",
+    "- Only use operation names that are discovered from Corsair.",
+    "- Before using an operation, discover available operations if necessary.",
+    "- When operation arguments are unclear, retrieve the schema first.",
+    "- Execute discovered operations through run_script. An operation name is a value you put inside run_script's code, never a tool you call directly.",
+    "- Do not assume Gmail operation names exist until they are discovered.",
+    "- Do not assume Calendar operation names exist until they are discovered.",
+    "- If Corsair exposes an operation such as gmail.api.messages.list, use the exact discovered name as a property path inside run_script's code (corsair.gmail.api.messages.list(...)), not as a tool name.",
+    "- Always use the exact operation name returned by Corsair.",
+    "- Never transform, shorten, rename, or approximate a discovered operation name.",
+    "- Use Corsair as the source of truth for available operations.",
+    "",
+    "Corsair workflow:",
+    "- User asks for account data.",
+    "- Discover available operations.",
+    "- Identify the best matching Corsair operation.",
+    "- Retrieve schema if needed.",
+    "- Execute operation through run_script.",
+    "- Analyze results.",
+    "- Continue calling additional Corsair operations if required.",
+    "- Only generate the final answer after sufficient data has been retrieved.",
+    "",
+    "Operation naming:",
+    "- Operation names may contain multiple namespaces such as corsair.gmail.api.messages.list.",
+    "- Preserve the full operation name exactly as discovered.",
+    "- Exact operation names are more important than assumptions.",
+    "- Never substitute one operation name for another.",
+    "",
+    "Data retrieval priority:",
+    "- If the user asks for emails, retrieve emails through Corsair operations before responding.",
+    "- If the user asks for calendar events, retrieve calendar data through Corsair operations before responding.",
+    "- If the user asks for inbox summaries, first retrieve inbox data through Corsair operations.",
+    "- If the user asks for account-specific information, retrieve real account data before responding.",
     "Google Calendar behavior:",
     "- For googlecalendar.events.create, event details must be nested under an event object.",
     "- Correct shape: { calendarId: 'primary', event: { summary, description, start, end, recurrence, attendees, location } }.",
@@ -289,6 +569,9 @@ export async function runAiAgent({
 
   const tools = [
     createSendProfessionalGmailTool(tenantCorsair, senderName),
+    createCalendarEventTool(tenantCorsair),
+    createListCalendarEventsTool(tenantCorsair),
+    createListRecentEmailsTool(tenantCorsair),
     ...provider.build({ corsair: tenantCorsair, tool }),
   ];
 
@@ -296,7 +579,7 @@ export async function runAiAgent({
 
   const agent = new Agent({
     name: "corsair-agent",
-    model: "gpt-4o-mini",
+    model: env.OPENAI_MODEL,
     instructions: buildInstructions(today, senderName),
     tools,
   });
@@ -314,7 +597,7 @@ export async function runAiAgent({
       : message;
 
   const result = await run(agent, input, {
-    maxTurns: 20,
+    maxTurns: 40,
   });
 
   return result.finalOutput ?? "";

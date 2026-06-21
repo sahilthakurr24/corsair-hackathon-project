@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: `dark:` utilities apply inside a `.dark` ancestor. */
+@custom-variant dark (&:is(.dark *));
+
 @theme {
   --color-background: #f6f7f9;
   --color-foreground: #14171f;
@@ -17,8 +20,28 @@
   --color-brand-blue: #0878f9;
   --color-brand-blue2: #0768e8;
 
+  /* Shared dark-surface tokens used across the chat workspace. */
+  --color-dk-bg: #0d1117;
+  --color-dk-surface: #161b22;
+  --color-dk-surface-2: #1b222c;
+  --color-dk-border: #232c38;
+  --color-dk-text: #e6edf3;
+  --color-dk-muted: #8b97a4;
+
   --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   --font-mono: var(--font-geist-mono), "Courier New", Courier, monospace;
+}
+
+/* Dark overrides for the semantic tokens above so token-based utilities flip. */
+.dark {
+  --color-background: #0d1117;
+  --color-foreground: #e6edf3;
+  --color-muted: #8b97a4;
+  --color-border: #232c38;
+  --color-panel: #161b22;
+  --color-panel-soft: #1b222c;
+  --color-primary-soft: #16323a;
+  --color-danger-soft: #2a1517;
 }
 
 @layer base {
@@ -33,12 +56,53 @@
     color: var(--color-foreground);
     background: var(--color-background);
     font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+  }
+
+  .dark body {
+    color-scheme: dark;
   }
 
   code {
     overflow-wrap: anywhere;
     font-family: "Courier New", Courier, monospace;
   }
+}
+
+/* FullCalendar dark theme (scoped to the dark calendar surface). */
+.dark .fc {
+  --fc-border-color: #232c38;
+  --fc-page-bg-color: #161b22;
+  --fc-neutral-bg-color: #1b222c;
+  --fc-today-bg-color: rgba(88, 166, 255, 0.12);
+  --fc-list-event-hover-bg-color: #1b222c;
+  color: #e6edf3;
+}
+
+.dark .fc .fc-toolbar-title,
+.dark .fc .fc-col-header-cell-cushion,
+.dark .fc .fc-daygrid-day-number {
+  color: #e6edf3;
+}
+
+.dark .fc .fc-day-other .fc-daygrid-day-number {
+  color: #6f7c8a;
+}
+
+.dark .fc .fc-button-primary {
+  background-color: #1b222c;
+  border-color: #232c38;
+  color: #cdd6e0;
+}
+
+.dark .fc .fc-button-primary:hover {
+  background-color: #232c38;
+}
+
+.dark .fc .fc-button-primary:disabled {
+  background-color: #161b22;
+  border-color: #232c38;
+  color: #6f7c8a;
 }
 
 @keyframes chat-bounce {

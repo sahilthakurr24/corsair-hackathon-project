@@ -34,7 +34,7 @@ export function SenderAvatar({
   return (
     <span
       style={{ width: size, height: size }}
-      className="grid flex-none place-items-center self-start overflow-hidden rounded-full border border-[#e7ecf2] bg-white"
+      className="grid flex-none place-items-center self-start overflow-hidden rounded-full border border-[#e7ecf2] bg-white dark:border-dk-border dark:bg-dk-surface"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

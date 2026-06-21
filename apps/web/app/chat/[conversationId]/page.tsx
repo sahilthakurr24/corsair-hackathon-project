@@ -12,6 +12,7 @@ import {
 } from "../_components/conversation";
 import { getCachedMessages } from "../_components/conversation-cache";
 import { Icon } from "../_components/icon";
+import { Skeleton } from "../_components/skeleton";
 
 type ServerMessage = {
   id: string;
@@ -85,9 +86,23 @@ export default function ConversationPage() {
 
   if (loading) {
     return (
-      <div className="grid flex-1 place-items-center content-center gap-3 text-[12px] text-[#667085]">
-        <span className="h-7 w-7 animate-spin rounded-full border-[3px] border-[#d6e8fb] border-t-brand-blue" />
-        <p>Loading conversation…</p>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 md:px-[54px]">
+        {Array.from({ length: 4 }).map((_, index) => {
+          const fromUser = index % 2 === 1;
+          return (
+            <div
+              key={index}
+              className={`mx-auto mb-[22px] flex max-w-[680px] gap-[11px] ${
+                fromUser ? "flex-row-reverse" : ""
+              }`}
+            >
+              <Skeleton className="h-[30px] w-[30px] flex-none rounded-lg" />
+              <Skeleton
+                className={`h-14 rounded-[11px] ${fromUser ? "w-[45%]" : "w-[62%]"}`}
+              />
+            </div>
+          );
+        })}
       </div>
     );
   }
