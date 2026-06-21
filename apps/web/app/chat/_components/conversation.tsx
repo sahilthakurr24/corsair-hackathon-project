@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { api } from "../../../lib/axios";
 import { Icon } from "./icon";
 import { ChatHeader } from "./chat-header";
-import { ChatHistory } from "./chat-history";
 import { setCachedMessages } from "./conversation-cache";
 
 export type Role = "user" | "assistant";
@@ -176,7 +175,6 @@ export function Conversation({
           </>
         }
         subtitle="AI-powered inbox & calendar"
-        actions={<ChatHistory activeConversationId={conversationId} />}
       />
 
       <div

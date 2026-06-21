@@ -48,6 +48,7 @@ const paths: Record<string, React.ReactNode> = {
     </>
   ),
   check: <path d="m5 12 4 4L19 6" />,
+  chevronDown: <path d="m6 9 6 6 6-6" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   back: (
     <>

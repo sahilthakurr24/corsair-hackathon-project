@@ -8,13 +8,11 @@ export function ChatHeader({
   title,
   status,
   subtitle,
-  actions,
 }: {
   icon: string;
   title: string;
   status: React.ReactNode;
   subtitle: string;
-  actions?: React.ReactNode;
 }) {
   const { openSidebar } = useChatShell();
 
@@ -37,12 +35,9 @@ export function ChatHeader({
           <small className="text-[9px] text-[#7f8b9e]">{status}</small>
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <span className="hidden text-[9px] text-[#98a2b3] lg:block">
-          {subtitle}
-        </span>
-        {actions}
-      </div>
+      <span className="hidden text-[9px] text-[#98a2b3] md:block">
+        {subtitle}
+      </span>
     </header>
   );
 }

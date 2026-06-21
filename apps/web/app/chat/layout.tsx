@@ -7,9 +7,9 @@ import { Brand } from "./_components/brand";
 import { Icon } from "./_components/icon";
 import { ChatShellProvider, useChatShell } from "./_components/chat-shell";
 import { ServerEventsProvider } from "./_components/server-events";
+import { SidebarChatNav } from "./_components/sidebar-chat-nav";
 
 const navItems = [
-  { href: "/chat", label: "Chat", icon: "spark" },
   { href: "/chat/inbox", label: "Inbox", icon: "inbox" },
   { href: "/chat/calendar", label: "Calendar", icon: "calendar" },
   { href: "/chat/drafts", label: "Drafts", icon: "mail" },
@@ -74,6 +74,7 @@ function Sidebar() {
               </Link>
             );
           })}
+          <SidebarChatNav onNavigate={closeSidebar} />
         </nav>
         <div className="mt-auto flex items-center gap-[9px] border-t border-[#e9edf3] pt-4">
           <span className="grid h-[34px] w-[34px] flex-none place-items-center rounded-full bg-gradient-to-br from-[#f4b283] to-[#74b6ac] text-[10px] font-bold text-white">
