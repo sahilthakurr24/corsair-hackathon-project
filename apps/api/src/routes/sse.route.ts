@@ -3,6 +3,6 @@ import {sseHandler} from "../controller/sse/index"
 const router:Router = express.Router();
 
 
-router.post("/events",sseHandler );
+router.get("/events", sseHandler);
 
 export default router;

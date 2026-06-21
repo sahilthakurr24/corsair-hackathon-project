@@ -8,6 +8,13 @@
       "when": 1781018182437,
       "tag": "0000_heavy_ego",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782030215608,
+      "tag": "0001_lame_longshot",
+      "breakpoints": true
     }
   ]
 }

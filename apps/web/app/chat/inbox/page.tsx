@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../../lib/axios";
 import { ChatHeader } from "../_components/chat-header";
+import { useServerEvent, useServerEventsStatus } from "../_components/server-events";
 import { useInboxCache } from "./_components/inbox-cache";
 import { MailListItem } from "./_components/mail-list-item";
 import { type GmailMessage, getErrorMessage } from "./_lib/gmail";
@@ -68,6 +69,17 @@ export default function InboxView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const connectionStatus = useServerEventsStatus();
+
+  // Realtime: Corsair pushes Gmail webhooks over SSE. The Gmail push payload
+  // only carries a Pub/Sub historyId (not the message itself), so the correct
+  // behavior is to refetch the top of the list whenever a gmail.* event fires.
+  useServerEvent((event) => {
+    if (event.plugin.startsWith("gmail")) {
+      void fetchInbox({ append: false });
+    }
+  });
+
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel || !nextPageToken) return;
@@ -90,7 +102,21 @@ export default function InboxView() {
       <ChatHeader
         icon="inbox"
         title="Inbox"
-        status={loading ? "Syncing…" : `${messages.length} messages`}
+        status={
+          <span className="flex items-center gap-[5px]">
+            <span
+              className={`inline-block h-[6px] w-[6px] rounded-full ${
+                connectionStatus === "open"
+                  ? "bg-[#22c55e]"
+                  : connectionStatus === "connecting"
+                    ? "bg-[#f59e0b]"
+                    : "bg-[#cbd5e1]"
+              }`}
+            />
+            {loading ? "Syncing…" : `${messages.length} messages`}
+            {connectionStatus === "open" && " · Live"}
+          </span>
+        }
         subtitle="Synced from your connected Gmail account"
       />
 

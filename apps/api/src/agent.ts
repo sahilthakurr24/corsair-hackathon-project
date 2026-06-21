@@ -1,15 +1,21 @@
 import "dotenv/config";
 import { OpenAIAgentsProvider } from "@corsair-dev/mcp";
-import { Agent, run, tool } from "@openai/agents";
+import { Agent, run, tool, user, assistant } from "@openai/agents";
 import { z } from "zod";
 import { corsairForTenant } from "./server/corsair";
 import { userService } from "./services";
 
 type TenantCorsair = ReturnType<typeof corsairForTenant>;
 
+type AgentHistoryItem = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 type RunAiAgentInput = {
   tenantId: string;
   message: string;
+  history?: AgentHistoryItem[];
 };
 
 function base64UrlEncode(value: string) {
@@ -272,7 +278,11 @@ const buildInstructions = (today: string, senderName: string | null) =>
     "- Be concise but include enough detail to fully answer the user's request.",
   ].join("\n");
 
-export async function runAiAgent({ tenantId, message }: RunAiAgentInput) {
+export async function runAiAgent({
+  tenantId,
+  message,
+  history,
+}: RunAiAgentInput) {
   const provider = new OpenAIAgentsProvider();
   const tenantCorsair = corsairForTenant(tenantId);
   const senderName = await userService.getCurrentUserName(tenantId);
@@ -291,7 +301,19 @@ export async function runAiAgent({ tenantId, message }: RunAiAgentInput) {
     tools,
   });
 
-  const result = await run(agent, message, {
+  const input =
+    history && history.length > 0
+      ? [
+          ...history.map((item) =>
+            item.role === "assistant"
+              ? assistant(item.content)
+              : user(item.content),
+          ),
+          user(message),
+        ]
+      : message;
+
+  const result = await run(agent, input, {
     maxTurns: 20,
   });
 

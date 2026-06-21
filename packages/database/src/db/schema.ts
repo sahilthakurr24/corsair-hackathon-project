@@ -8,6 +8,7 @@ import {
   uniqueIndex,
   boolean,
   uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 export const connectedAccountProviderEnum = pgEnum(
@@ -21,6 +22,11 @@ export const connectedAccountStatusEnum = pgEnum("connected_account_status", [
   "revoked",
 ]);
 
+export const messageRoleEnum = pgEnum("message_role", [
+  "user",
+  "assistant",
+  "system",
+]);
 export const users = pgTable(
   "users",
   {
@@ -175,4 +181,44 @@ export const emailMessages = pgTable("email_messages", {
   receivedAt: timestamp("received_at").notNull(),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const conversations = pgTable("conversations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  userId: varchar("user_id", { length: 255 }).notNull(),
+
+  title: varchar("title", { length: 255 }).notNull(),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+});
+
+export const messages = pgTable("messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  conversationId: uuid("conversation_id")
+    .notNull()
+    .references(() => conversations.id, {
+      onDelete: "cascade",
+    }),
+
+  role: messageRoleEnum("role").notNull(),
+
+  content: text("content").notNull(),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
 });

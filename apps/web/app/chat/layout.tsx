@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Brand } from "./_components/brand";
 import { Icon } from "./_components/icon";
 import { ChatShellProvider, useChatShell } from "./_components/chat-shell";
+import { ServerEventsProvider } from "./_components/server-events";
 
 const navItems = [
   { href: "/chat", label: "Chat", icon: "spark" },
@@ -262,7 +263,9 @@ export default function ChatLayout({
 }) {
   return (
     <ChatShellProvider>
-      <ChatShell>{children}</ChatShell>
+      <ServerEventsProvider>
+        <ChatShell>{children}</ChatShell>
+      </ServerEventsProvider>
     </ChatShellProvider>
   );
 }

@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { errorHandler, notFoundHandler } from "./middleware/error";
-import aiRouter from "./routes/ai.route";
+import chatRouter from "./routes/chat.route";
 import authRouter from "./routes/auth.route";
 import webhookRouter from "./routes/webhook.route";
 import sseRouter from "./routes/sse.route";
@@ -32,7 +32,7 @@ app.get("/health", (_req, res) => {
   res.json({ health: true });
 });
 app.use("/auth", authRouter);
-app.use("/ai", aiRouter);
+app.use("/ai", chatRouter);
 app.use("/sse", sseRouter);
 app.use("/gmail", gmailRouter);
 app.use("/calendar", googleCalendarRouter);
