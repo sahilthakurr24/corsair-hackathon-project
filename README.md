@@ -1,159 +1,193 @@
-# Turborepo starter
+# CalMail
 
-This Turborepo starter is maintained by the Turborepo core team.
+CalMail is an AI-powered email and calendar workspace built for the Corsair hackathon. It combines a polished Next.js interface with an Express API, Clerk authentication, OpenAI Agents, Corsair Gmail and Google Calendar integrations, and a Drizzle/Postgres data layer so users can manage messages, schedules, drafts, and tasks through natural conversation.
 
-## Using this example
+## Preview
 
-Run the following command:
+### Landing Page
 
-```sh
-npx create-turbo@latest
+![CalMail landing page](apps/web/public/images/landing-page.png)
+
+### AI Chat Interface
+
+![CalMail chat interface](apps/web/public/images/chat-interface.png)
+
+### Inbox
+
+![CalMail inbox](apps/web/public/images/inbox.png)
+
+### Rename Flow
+
+![CalMail rename flow](apps/web/public/images/rename.png)
+
+## Features
+
+- AI assistant for email and calendar workflows
+- Gmail inbox, message body, draft, and send support through Corsair
+- Google Calendar event listing and creation
+- Conversation history persisted in Postgres
+- Clerk-based authentication across web and API
+- Server-sent events support for live server updates
+- Shared Drizzle schema and database client package
+- Turborepo monorepo with shared TypeScript, ESLint, and UI packages
+
+## Tech Stack
+
+| Area | Technology |
+| --- | --- |
+| Monorepo | Turborepo, pnpm workspaces |
+| Web | Next.js 16, React 19, Tailwind CSS 4 |
+| API | Express 5, TypeScript, Zod |
+| Auth | Clerk |
+| AI | OpenAI Agents SDK |
+| Integrations | Corsair Gmail, Corsair Google Calendar |
+| Database | Postgres, Drizzle ORM |
+| Tooling | ESLint, Prettier, TypeScript |
+
+## Project Structure
+
+```text
+corsair-hackathon/
+├── apps/
+│   ├── api/                 # Express API, controllers, routes, AI agent, integrations
+│   ├── docs/                # Next.js docs app scaffold
+│   └── web/                 # Main CalMail Next.js application
+│       ├── app/             # App Router pages and layouts
+│       ├── lib/             # API client helpers
+│       └── public/images/   # Product screenshots used in this README
+├── packages/
+│   ├── database/            # Drizzle schema, migrations, database client
+│   ├── eslint-config/       # Shared lint configuration
+│   ├── typescript-config/   # Shared tsconfig presets
+│   └── ui/                  # Shared React UI primitives
+├── pnpm-workspace.yaml
+├── turbo.json
+└── package.json
 ```
 
-## What's inside?
+## Application Modules
 
-This Turborepo includes the following packages/apps:
+### Web App
 
-### Apps and Packages
+The main UI lives in `apps/web`. It includes:
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- Marketing landing page at `/`
+- Authenticated chat shell under `/chat`
+- Inbox views under `/chat/inbox`
+- Drafts, calendar, contacts, and tasks routes
+- Clerk provider, theme provider, and Axios API client
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### API
 
-### Utilities
+The backend lives in `apps/api`. It exposes:
 
-This Turborepo has some additional tools already setup for you:
+- `GET /health` for API health checks
+- `/auth` for OAuth and connection flows
+- `/ai` for conversations and AI responses
+- `/gmail` for Gmail-backed inbox and draft actions
+- `/calendar` for Google Calendar actions
+- `/overview` for workspace summary data
+- `/sse` for server-sent events
+- `/webhooks` for Corsair webhook handling
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### Database
 
-### Build
+The database package in `packages/database` defines Drizzle tables for:
 
-To build all apps and packages, run the following command:
+- users
+- connected accounts
+- Corsair integrations, accounts, entities, and events
+- email threads and messages
+- AI conversations and messages
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Getting Started
 
-```sh
-cd my-turborepo
-turbo build
+### Prerequisites
+
+- Node.js 18 or newer
+- pnpm 9
+- Postgres database connection string
+- Clerk application keys
+- OpenAI API key
+- Google OAuth credentials
+- Corsair credentials/configuration
+
+### Install Dependencies
+
+```bash
+pnpm install
 ```
 
-Without global `turbo`, use your package manager:
+### Environment Variables
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+Create the required `.env` files based on how the app loads configuration. The API reads from the workspace root, `packages/.env`, and `apps/api/.env`.
+
+```bash
+# API / database
+DATABASE_URL=
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+CORSAIR_KEK=
+CORSAIR_TENANT_ID=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+CLERK_SECRET_KEY=
+CLERK_PUBLISHABLE_KEY=
+WEB_ORIGIN=http://localhost:3000
+API_PUBLIC_ORIGIN=http://localhost:4000
+WEBHOOK_URL=
+PORT=4000
+
+# Web
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Run Locally
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Start every app in development mode:
 
-```sh
-turbo build --filter=docs
+```bash
+pnpm dev
 ```
 
-Without global `turbo`:
+Run a specific app:
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+pnpm --filter web dev
+pnpm --filter @repo/api dev
 ```
 
-### Develop
+By default, the web app runs on `http://localhost:3000` and the API runs on `http://localhost:4000`.
 
-To develop all apps and packages, run the following command:
+## Useful Scripts
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+```bash
+pnpm dev          # Start all development servers through Turborepo
+pnpm build        # Build all apps and packages
+pnpm lint         # Run lint checks
+pnpm check-types  # Run TypeScript checks
+pnpm format       # Format TypeScript, TSX, and Markdown files
 ```
 
-Without global `turbo`, use your package manager:
+## Architecture
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+CalMail uses the Next.js app as the client-facing workspace and routes authenticated API requests to the Express backend. Clerk provides identity, the API validates requests with Zod, and Drizzle stores user data, connected accounts, email metadata, and conversation history. The OpenAI agent receives the user request plus prior conversation context and can call purpose-built tools for Gmail and Calendar actions through Corsair.
+
+```text
+User
+  ↓
+Next.js Web App
+  ↓ authenticated Axios requests
+Express API
+  ├── Clerk auth middleware
+  ├── OpenAI agent orchestration
+  ├── Corsair Gmail and Calendar tools
+  └── Drizzle/Postgres persistence
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Notes
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- Screenshot assets are stored in `apps/web/public/images`.
+- The repository still includes generated folders such as `.next`, `dist`, and `.turbo`; these are build artifacts and are not part of the source architecture.
+- The docs app is currently the default Turborepo/Next.js scaffold, while `apps/web` contains the primary CalMail product experience.
