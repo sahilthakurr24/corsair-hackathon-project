@@ -16,7 +16,7 @@ CalMail is an AI-powered email and calendar workspace built for the Corsair hack
 
 ![CalMail inbox](apps/web/public/images/inbox.png)
 
-### Rename Flow
+### Calendar
 
 ![CalMail rename flow](apps/web/public/images/rename.png)
 
