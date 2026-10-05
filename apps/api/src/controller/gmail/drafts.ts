@@ -64,7 +64,11 @@ export async function listDrafts(
   }
 }
 
-export async function getDraft(req: Request, res: Response, next: NextFunction) {
+export async function getDraft(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   try {
     const userId = getAuthenticatedUserId(req, res);
     if (!userId) return;
@@ -175,7 +179,9 @@ export async function sendDraft(
 
     const message = await tenant.gmail.api.drafts.send({ id });
 
-    return res.status(200).json({ success: true, messageId: message.id ?? null });
+    return res
+      .status(200)
+      .json({ success: true, messageId: message.id ?? null });
   } catch (error) {
     return next(error);
   }

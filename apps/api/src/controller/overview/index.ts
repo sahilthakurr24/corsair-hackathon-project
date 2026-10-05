@@ -37,7 +37,9 @@ export async function getOverview(
     startOfToday.setHours(0, 0, 0, 0);
     const endOfToday = new Date(now);
     endOfToday.setHours(23, 59, 59, 999);
-    const weekAhead = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const weekAhead = new Date(
+      startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000,
+    );
     const todayStr = toLocalDateString(now);
 
     const [eventsResponse, draftsResponse, unreadResponse] = await Promise.all([

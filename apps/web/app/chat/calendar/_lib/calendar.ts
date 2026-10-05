@@ -45,7 +45,10 @@ export function isAllDay(event: CalendarEvent) {
   return !event.start?.dateTime;
 }
 
-const timeFormatter = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" });
+const timeFormatter = new Intl.DateTimeFormat("en", {
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 export function formatEventTime(event: CalendarEvent) {
   if (isAllDay(event)) return "All day";
@@ -92,9 +95,13 @@ export function formatEventDateTime(event: CalendarEvent) {
 
 export function getErrorMessage(requestError: unknown) {
   if (axios.isAxiosError(requestError)) {
-    const data = requestError.response?.data as { message?: string; reason?: string } | undefined;
+    const data = requestError.response?.data as
+      | { message?: string; reason?: string }
+      | undefined;
     return data?.message ?? data?.reason ?? requestError.message;
   }
 
-  return requestError instanceof Error ? requestError.message : "Something went wrong.";
+  return requestError instanceof Error
+    ? requestError.message
+    : "Something went wrong.";
 }

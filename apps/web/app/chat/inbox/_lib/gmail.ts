@@ -13,15 +13,19 @@ export type GmailMessage = {
 
 export function getHeader(message: GmailMessage, name: string) {
   return (
-    message.payload?.headers?.find((header) => header.name?.toLowerCase() === name.toLowerCase())
-      ?.value ?? ""
+    message.payload?.headers?.find(
+      (header) => header.name?.toLowerCase() === name.toLowerCase(),
+    )?.value ?? ""
   );
 }
 
 export function formatMessageDate(internalDate?: string) {
   const date = new Date(Number(internalDate));
   if (!internalDate || Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(date);
 }
 
 export function formatFullDate(internalDate?: string) {
@@ -48,9 +52,13 @@ export function parseFromHeader(from: string) {
 
 export function getErrorMessage(requestError: unknown) {
   if (axios.isAxiosError(requestError)) {
-    const data = requestError.response?.data as { message?: string; reason?: string } | undefined;
+    const data = requestError.response?.data as
+      | { message?: string; reason?: string }
+      | undefined;
     return data?.message ?? data?.reason ?? requestError.message;
   }
 
-  return requestError instanceof Error ? requestError.message : "Something went wrong.";
+  return requestError instanceof Error
+    ? requestError.message
+    : "Something went wrong.";
 }
